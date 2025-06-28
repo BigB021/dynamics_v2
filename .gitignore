@@ -40,6 +40,9 @@ build/Release
 # Dependency directories
 node_modules/
 jspm_packages/
+/dynamics-desktop/node_modules/
+/music-server/node_modules/
+
 
 # Snowpack dependency directory (https://snowpack.dev/)
 web_modules/
