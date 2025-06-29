@@ -140,3 +140,13 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+
+# Python virtual environment
+/music-server/venv/
+
+# Media files
+/music-server/media/
+
+# React build output
+/dynamics-desktop/build/
