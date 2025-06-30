@@ -1,0 +1,45 @@
+# Progress Status (Today)
+1. Implemented robust download handling with SpotDL.
+
+2. Added parsing of artist and title from SpotDL output.
+
+3. Improved file matching logic by searching for .mp3 files that include artist and title substrings, reducing "file not found" errors.
+
+4. Added fallback to the newest .mp3 file if no exact match is found.
+
+5. Updated download state tracking and database save calls with detailed metadata (artist, title).
+
+6. Fixed bugs related to parsing and process output handling.
+
+# To-Do for Tomorrow
+1. Database update:
+
+- Modify DB schema and addDownload method to properly store artist and title.
+
+- Implement retrieval of downloads filtering by artist or title (optional).
+
+2. Front-end progress UI:
+
+- Build a minimal React component to display download progress states and messages.
+
+- Connect progress API endpoint and handle errors gracefully.
+
+3. Error handling improvements:
+
+- Add retry mechanism on rate limit errors.
+
+- Enhance logging for easier debugging.
+
+4. Testing:
+
+- Perform end-to-end tests for various Spotify URLs and edge cases.
+
+- Verify file integrity and metadata correctness.
+
+- Code cleanup & documentation:
+
+- Comment and document key parts of the download module.
+
+- Refactor for readability and maintainability.
+
+
