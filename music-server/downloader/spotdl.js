@@ -62,7 +62,7 @@ function downloadWithSpotDL(url, taskId) {
     }
 
     const outputTemplate = path.join(downloadDir, '{artist} - {title}');
-    const args = ['--output', outputTemplate, url];
+    const args = ['--output', outputTemplate, '--bitrate', '192k', '--format', 'mp3', url];
     const proc = spawn(spotdlPath, args, {
       env: {
         ...process.env,
