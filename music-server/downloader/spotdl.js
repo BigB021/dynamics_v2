@@ -4,6 +4,8 @@ const dotenv = require('dotenv');
 const fs = require('fs');
 const { getDownloadBySpotifyId, addDownload } = require('../db/db');
 const glob = require('glob');
+const mm = require('music-metadata'); 
+
 
 
 dotenv.config();
@@ -17,6 +19,25 @@ function extractSpotifyId(url) {
   const match = url.match(/track\/([a-zA-Z0-9]+)/);
   return match ? match[1] : null;
 }
+
+async function extractCover(mp3FilePath, outputDir) {
+  try {
+    const metadata = await mm.parseFile(mp3FilePath);
+    const pictures = metadata.common.picture;
+    if (pictures && pictures.length > 0) {
+      const picture = pictures[0];
+      const ext = picture.format.split('/')[1] || 'jpeg'; // image/jpeg -> jpg
+      const coverFileName = path.basename(mp3FilePath, path.extname(mp3FilePath)) + '.' + ext;
+      const coverPath = path.join(outputDir, coverFileName);
+      fs.writeFileSync(coverPath, picture.data);
+      return coverPath; // return full local path
+    }
+  } catch (error) {
+    console.error('Cover extraction error:', error);
+  }
+  return null;
+}
+
 
 function sanitizeFileName(name) {
   return name.replace(/[<>:"/\\|?*\x00-\x1F]/g, '').trim();
@@ -40,7 +61,7 @@ function downloadWithSpotDL(url, taskId) {
       return resolve(msg);
     }
 
-    const outputTemplate = path.join(downloadDir, '{artist} - {title}.%(ext)s');
+    const outputTemplate = path.join(downloadDir, '{artist} - {title}');
     const args = ['--output', outputTemplate, url];
     const proc = spawn(spotdlPath, args, {
       env: {
@@ -105,39 +126,49 @@ function downloadWithSpotDL(url, taskId) {
     });
 
 
-    proc.on('close', (code) => {
-      if (code === 0) {
-        // Find newest .mp3 in downloadDir as fallback (most recent download)
-        const mp3s = glob.sync(path.join(downloadDir, '*.mp3'));
-        if (mp3s.length === 0) {
-          const msg = `No mp3 files found in ${downloadDir}`;
-          downloads[taskId] = { state: 'error', message: msg };
-          return reject(new Error(msg));
-        }
-      
-        // Sort by mtime descending, newest first
-        mp3s.sort((a, b) => fs.statSync(b).mtimeMs - fs.statSync(a).mtimeMs);
-        finalFilePath = mp3s[0];
-      
-        console.log(`[${taskId}] Using fallback latest mp3 file: ${finalFilePath}`);
-      
-        if (fs.existsSync(finalFilePath)) {
-          addDownload(spotifyId, finalFilePath, 'downloaded', artist, title);
-          downloads[taskId] = { state: 'finished', message: 'Download finished successfully' };
-          resolve('Download finished successfully');
-        } else {
-          const msg = `File not found after fallback path check: ${finalFilePath}`;
-          downloads[taskId] = { state: 'error', message: msg };
-          reject(new Error(msg));
-        }
-      } else {
-        downloads[taskId] = { state: 'error', message: `Download failed with exit code ${code}` };
-        reject(new Error(`Download failed with code ${code}`));
-      }
-    });
-
-  });
-}
+    proc.on('close', async (code) => {
+          if (code === 0) {
+            // Find newest .mp3 in downloadDir as fallback (most recent download)
+            const mp3s = glob.sync(path.join(downloadDir, '*.mp3'));
+            if (mp3s.length === 0) {
+              const msg = `No mp3 files found in ${downloadDir}`;
+              downloads[taskId] = { state: 'error', message: msg };
+              return reject(new Error(msg));
+            }
+          
+            // Sort by mtime descending, newest first
+            mp3s.sort((a, b) => fs.statSync(b).mtimeMs - fs.statSync(a).mtimeMs);
+            finalFilePath = mp3s[0];
+          
+            console.log(`[${taskId}] Using fallback latest mp3 file: ${finalFilePath}`);
+          
+            if (fs.existsSync(finalFilePath)) {
+              // Extract cover art here
+              const coverPath = await extractCover(finalFilePath, downloadDir);
+            
+              // Store relative path or absolute path (adjust as needed)
+              const coverUrl = coverPath ? coverPath : null;
+            
+              // Extract relative cover filename if coverPath exists
+              const coverFileName = coverPath ? path.basename(coverPath) : null;
+                          
+              // You can pass null for album, duration, releaseDate if unknown
+              addDownload(spotifyId, finalFilePath, 'downloaded', artist, title, null, null, null, coverFileName);
+            
+              downloads[taskId] = { state: 'finished', message: 'Download finished successfully' };
+              resolve('Download finished successfully');
+            } else {
+              const msg = `File not found after fallback path check: ${finalFilePath}`;
+              downloads[taskId] = { state: 'error', message: msg };
+              reject(new Error(msg));
+            }
+          } else {
+            downloads[taskId] = { state: 'error', message: `Download failed with exit code ${code}` };
+            reject(new Error(`Download failed with code ${code}`));
+          }
+        });
+      });
+    }
 
 function getProgress(taskId) {
   return downloads[taskId] || { state: 'unknown', message: 'No such task' };

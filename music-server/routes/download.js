@@ -1,12 +1,14 @@
 const express = require('express');
-const { downloadWithSpotDL, getProgress } = require('../downloader/spotdl');
-const {getDownloadBySpotifyId,deleteDownloadBySpotifyId} = require('../db/db')
 const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
+const { downloadWithSpotDL, getProgress } = require('../downloader/spotdl');
+const {getDownloadBySpotifyId,deleteDownloadBySpotifyId} = require('../db/db')
 
 const router = express.Router();
 
 const tasks = {}; // taskId => Promise
+
+
 
 router.get('/check', (req, res) => {
   const { spotifyId } = req.query;
