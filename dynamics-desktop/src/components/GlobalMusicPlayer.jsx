@@ -33,23 +33,43 @@ const GlobalMusicPlayer = ({ currentTrack, onClose, theme = 'dark' }) => {
   }, [currentTrack]);
 
   useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
+  const audio = audioRef.current;
+  if (!audio || !currentTrack) return;
 
-    const updateTime = () => setCurrentTime(audio.currentTime);
-    const updateDuration = () => setDuration(audio.duration);
-    const handleEnded = () => setIsPlaying(false);
+  const updateTime = () => setCurrentTime(audio.currentTime);
+  const updateDuration = () => {
+    if (!isNaN(audio.duration)) {
+      setDuration(audio.duration);
+    }
+  };
+  
+  const handleEnded = () => setIsPlaying(false);
 
-    audio.addEventListener('timeupdate', updateTime);
-    audio.addEventListener('loadedmetadata', updateDuration);
-    audio.addEventListener('ended', handleEnded);
+      // Force reload metadata
+      audio.src = currentTrack.url;
+      audio.load(); // Force metadata reload
+      audio.play().then(() => setIsPlaying(true)).catch(console.error);
 
-    return () => {
-      audio.removeEventListener('timeupdate', updateTime);
-      audio.removeEventListener('loadedmetadata', updateDuration);
-      audio.removeEventListener('ended', handleEnded);
-    };
-  }, []);
+      // Attach events
+      audio.addEventListener('timeupdate', updateTime);
+      audio.addEventListener('loadedmetadata', updateDuration);
+      audio.addEventListener('durationchange', updateDuration); // <- Added
+      audio.addEventListener('ended', handleEnded);
+
+      // Initial update in case metadata already loaded
+      if (!isNaN(audio.duration)) {
+        setDuration(audio.duration);
+      }
+
+      return () => {
+        audio.pause();
+        audio.removeEventListener('timeupdate', updateTime);
+        audio.removeEventListener('loadedmetadata', updateDuration);
+        audio.removeEventListener('durationchange', updateDuration);
+        audio.removeEventListener('ended', handleEnded);
+      };
+    }, [currentTrack]);
+
 
   const togglePlay = () => {
     if (audioRef.current) {
@@ -113,8 +133,8 @@ const GlobalMusicPlayer = ({ currentTrack, onClose, theme = 'dark' }) => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4 min-w-0 flex-1">
               <div className="w-16 h-16 rounded-xl flex items-center justify-center border shadow-lg bg-[var(--glass)]">
-                {currentTrack.artwork ? (
-                  <img src={currentTrack.artwork} alt="Album art" className="w-full h-full object-cover rounded-xl" />
+                {currentTrack.cover ? (
+                  <img src={currentTrack.cover} alt="Album art" className="w-full h-full object-cover rounded-xl" />
                 ) : (
                   <Music className="w-8 h-8 text-[color:var(--text-muted)]" />
                 )}
@@ -192,10 +212,24 @@ const GlobalMusicPlayer = ({ currentTrack, onClose, theme = 'dark' }) => {
               className="flex-1 h-2 rounded-full cursor-pointer overflow-hidden shadow-inner bg-[var(--progress)]"
               onClick={handleProgressClick}
             >
-              <div
-                className="h-full rounded-full transition-all duration-100 shadow-sm"
-                style={{ width: `${duration ? (currentTime / duration) * 100 : 0}%`, background: 'var(--progress-fill)' }}
-              />
+              <div className="relative w-full h-2  bg-violet-200 rounded-full overflow-hidden cursor-pointer" onClick={handleProgressClick}>
+                  <div
+                    className="absolute top-0 left-0 h-full rounded-full bg-purple-500"
+                    style={{
+                      width: `${duration ? (currentTime / duration) * 100 : 0}%`,
+                      transition: 'width 0.2s linear',
+                    }}
+                  />
+                  {/*thumb dot */}
+                  <div
+                    className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-purple-500 shadow"
+                    style={{
+                      left: `calc(${duration ? (currentTime / duration) * 100 : 0}% - 6px)`,
+                      transition: 'left 0.2s linear',
+                    }}
+                  />
+                </div>
+
             </div>
             <span className="text-sm text-[color:var(--text-muted)] min-w-[40px]">{formatTime(duration)}</span>
           </div>
