@@ -1,65 +1,62 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import MusicPlayer from './MusicPlayer';
+import { Play, Download, Loader2 } from 'lucide-react';
 
 const extractSpotifyId = (url) => {
   const match = url.match(/track\/([a-zA-Z0-9]+)/);
   return match ? match[1] : null;
 };
 
-const SearchResultItem = ({ track }) => {
+const sanitizeFileName = (name) =>
+  name.replace(/[<>:"/\\|?*\x00-\x1F]/g, '').trim();
+
+const SearchResultItem = ({ track, onPlay }) => {
   const [isDownloading, setIsDownloading] = useState(false);
   const [progressText, setProgressText] = useState('');
   const [downloaded, setDownloaded] = useState(false);
+  const [fileUrl, setFileUrl] = useState('');
   const eventSourceRef = useRef(null);
 
+  const spotifyId = extractSpotifyId(track.url);
+
   useEffect(() => {
-    const spotifyId = extractSpotifyId(track.url);
     if (!spotifyId) return;
 
-    axios.get(`http://localhost:3000/api/download/check?spotifyId=${spotifyId}`)
-      .then(res => {
+    axios
+      .get(`http://localhost:3000/api/download/check?spotifyId=${spotifyId}`)
+      .then((res) => {
         if (res.data.downloaded) {
           setDownloaded(true);
+          const fileName = `${sanitizeFileName(track.artist)} - ${sanitizeFileName(track.name)}.mp3`;
+          setFileUrl(`http://localhost:3000/media/${encodeURIComponent(fileName)}`);
         }
       })
       .catch(console.error);
-  }, [track.url]);
-
+  }, [track.url, track.artist, track.name, spotifyId]);
 
   const handleDownload = async () => {
     setIsDownloading(true);
     setProgressText('Starting download...');
 
     try {
-      const res = await axios.post('http://localhost:3000/api/download', {
-        url: track.url,
-        title: track.name,
-      });
-
+      const res = await axios.post('http://localhost:3000/api/download', { url: track.url });
       const { taskId } = res.data;
 
-      eventSourceRef.current = new EventSource(`http://localhost:3000/api/download/progress/${taskId}`);
+      eventSourceRef.current = new EventSource(
+        `http://localhost:3000/api/download/progress/${taskId}`
+      );
 
       eventSourceRef.current.onmessage = (event) => {
         const { state, message } = JSON.parse(event.data);
         setProgressText(message);
 
-       if (state === 'finished') {
+        if (state === 'finished') {
           setIsDownloading(false);
           eventSourceRef.current.close();
-
-          // Optional: recheck backend to confirm
-          const spotifyId = extractSpotifyId(track.url);
-          axios.get(`http://localhost:3000/api/download/check?spotifyId=${spotifyId}`)
-            .then(res => {
-              if (res.data.downloaded) {
-                setDownloaded(true);
-              }
-            });
-        
-          alert(`✅ Download finished for "${track.name}"`);
-        }else if (state === 'error') {
+          setDownloaded(true);
+          const fileName = `${sanitizeFileName(track.artist)} - ${sanitizeFileName(track.name)}.mp3`;
+          setFileUrl(`http://localhost:3000/media/${encodeURIComponent(fileName)}`);
+        } else if (state === 'error') {
           setIsDownloading(false);
           eventSourceRef.current.close();
           alert(`❌ Download failed for "${track.name}": ${message}`);
@@ -68,9 +65,7 @@ const SearchResultItem = ({ track }) => {
 
       eventSourceRef.current.onerror = () => {
         setIsDownloading(false);
-        if (eventSourceRef.current) {
-          eventSourceRef.current.close();
-        }
+        if (eventSourceRef.current) eventSourceRef.current.close();
       };
     } catch (err) {
       console.error('Download error:', err);
@@ -79,46 +74,56 @@ const SearchResultItem = ({ track }) => {
     }
   };
 
-  return (
-    <div className="flex items-center gap-4 p-3 bg-white shadow rounded-md hover:bg-gray-50">
-        {/* ... cover, track info ... */}
+  const handlePlay = () => {
+    if (onPlay && fileUrl) {
+      onPlay({
+        artist: track.artist,
+        title: track.name,
+        url: fileUrl,
+      });
+    }
+  };
 
-      {track.cover && (
-        <img
-          src={track.cover}
-          alt={`${track.name} cover`}
-          className="w-16 h-16 rounded object-cover"
-        />
-      )}
-      <div className="flex flex-col flex-grow">
-        <h3 className="font-semibold text-lg">{track.name}</h3>
-        <p className="text-sm text-gray-600">
-          {track.artist} — <span className="italic">{track.album}</span>
+  return (
+    <div className="flex items-center gap-4 p-4 bg-white dark:bg-zinc-900 shadow rounded-xl hover:shadow-md transition-all">
+      <img
+        src={track.cover || '/default_cover.jpg'}
+        alt={`${track.name} cover`}
+        className="w-16 h-16 rounded-lg object-cover shadow-sm"
+      />
+
+      <div className="flex-grow min-w-0">
+        <h3 className="font-semibold text-zinc-800 dark:text-white truncate">{track.name}</h3>
+        <p className="text-sm text-zinc-500 dark:text-zinc-400 truncate">
+          {track.artist} <span className="italic text-xs ml-1">({track.album || 'Unknown Album'})</span>
         </p>
       </div>
-      {downloaded ? (
-        <button disabled className="px-3 py-1 bg-gray-400 text-white rounded cursor-default">
-          Downloaded
-        </button>
-      ) : isDownloading ? (
-        <button disabled className="relative w-10 h-10 rounded-full border-4 border-green-600 border-t-transparent animate-spin" title={progressText}>
-          {/* spinner */}
-        </button>
-      ) : (
-        <button onClick={handleDownload} className="px-3 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700">
-          Download
-        </button>
-      )}
 
-      {downloaded && (
-        <MusicPlayer
-          src={`http://localhost:3000/media/${track.artist} - ${track.name}.mp3`}
-          title={`${track.artist} - ${track.name}`}
-        />
-      )}
-
-
-      
+      <div className="flex-shrink-0">
+        {downloaded ? (
+          <button
+            onClick={handlePlay}
+            className="w-10 h-10 flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white rounded-full"
+            title="Play"
+          >
+            <Play size={18} />
+          </button>
+        ) : isDownloading ? (
+          <div
+            className="relative w-10 h-10 flex items-center justify-center text-green-600"
+            title={progressText}
+          >
+            <Loader2 size={20} className="animate-spin" />
+          </div>
+        ) : (
+          <button
+            onClick={handleDownload}
+            className="flex items-center gap-2 px-3 py-1.5 text-sm bg-green-700 hover:bg-green-800 text-white rounded-full shadow"
+          >
+            <Download size={16} />
+          </button>
+        )}
+      </div>
     </div>
   );
 };

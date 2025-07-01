@@ -1,24 +1,28 @@
 const express = require('express');
-const fs = require('fs');
 const path = require('path');
-
+const { getAllDownloads } = require('../db/db'); 
 const router = express.Router();
-const mediaDir = path.resolve(process.env.DOWNLOAD_DIR || './media');
+
+const mediaBaseUrl = 'http://localhost:3000/media/';
 
 router.get('/', (req, res) => {
-  fs.readdir(mediaDir, (err, files) => {
-    if (err) return res.status(500).json({ error: 'Failed to read media folder' });
+  try {
+    // Fetch all downloaded tracks from DB
+    const downloads = getAllDownloads();
 
-    const audioFiles = files.filter(f => f.endsWith('.mp3') || f.endsWith('.flac') || f.endsWith('.wav'));
-
-    // Map to objects with URLs
-    const tracks = audioFiles.map(filename => ({
-      filename,
-      url: `http://localhost:3000/media/${encodeURIComponent(filename)}`,
+    const tracks = downloads.map(track => ({
+      filename: path.basename(track.file_path),
+      url: mediaBaseUrl + encodeURIComponent(path.basename(track.file_path)),
+      artist: track.artist || 'Unknown Artist',
+      title: track.title || 'Unknown Title',
+      cover: track.cover ? mediaBaseUrl + encodeURIComponent(track.cover) : '/default_cover.jpeg'
     }));
 
     res.json(tracks);
-  });
+  } catch (err) {
+    console.error('Error fetching downloaded tracks:', err);
+    res.status(500).json({ error: 'Failed to get downloaded tracks' });
+  }
 });
 
 module.exports = router;
