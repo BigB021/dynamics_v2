@@ -7,6 +7,19 @@ const DownloadedTracks = () => {
   const [tracks, setTracks] = useState([]);
   const [currentTrack, setCurrentTrack] = useState(null);
 
+  const handleDelete = (spotifyId) => {
+  fetch(`http://localhost:3000/api/downloaded/${spotifyId}`, {
+    method: 'DELETE',
+  })
+    .then(res => {
+      if (!res.ok) throw new Error('Failed to delete track');
+      // Remove track from UI
+      setTracks(prev => prev.filter(track => track.spotify_id !== spotifyId));
+    })
+    .catch(console.error);
+};
+
+
   useEffect(() => {
     fetch('http://localhost:3000/api/downloaded')
       .then(res => res.json())
@@ -60,6 +73,19 @@ const DownloadedTracks = () => {
                 <div className="text-sm text-zinc-500 dark:text-zinc-400 truncate">{track.artist}</div>
                 <div className="text-xs text-zinc-400 dark:text-zinc-500 truncate">{track.filename}</div>
               </div>
+
+              <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation(); // prevent triggering the play
+                    handleDelete(track.spotify_id);
+                  }}
+                  className="p-1.5 rounded-full bg-red-500 hover:bg-red-600 text-white shadow"
+                >
+                  ✕
+                </button>
+              </div>
+                
             </div>
           ))}
         </div>

@@ -103,7 +103,7 @@ const SearchResultItem = ({ track, onPlay }) => {
         {downloaded ? (
           <button
             onClick={handlePlay}
-            className="w-10 h-10 flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white rounded-full"
+            className="w-10 h-10 flex items-center justify-center bg-violet-600 hover:bg-violet-700 text-white rounded-full"
             title="Play"
           >
             <Play size={18} />
@@ -113,14 +113,14 @@ const SearchResultItem = ({ track, onPlay }) => {
             className="relative w-10 h-10 flex items-center justify-center text-green-600"
             title={progressText}
           >
-            <Loader2 size={20} className="animate-spin" />
+            <Loader2 size={28} className="animate-spin" />
           </div>
         ) : (
           <button
             onClick={handleDownload}
             className="flex items-center gap-2 px-3 py-1.5 text-sm bg-green-700 hover:bg-green-800 text-white rounded-full shadow"
           >
-            <Download size={16} />
+            <Download size={22} />
           </button>
         )}
       </div>
