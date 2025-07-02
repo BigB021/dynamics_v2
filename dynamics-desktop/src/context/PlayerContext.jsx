@@ -13,6 +13,9 @@ export const PlayerProvider = ({ children }) => {
     ? queue[currentIndex]
     : null;
 
+
+  const [shouldAutoPlay, setShouldAutoPlay] = useState(false);
+    
   // Safely set current track by index
   const setCurrentTrackByIndex = useCallback((index) => {
     if (index >= 0 && index < queue.length) {
@@ -103,6 +106,8 @@ const playNext = useCallback(({ shuffle = false } = {}) => {
     isPlayerReady,
     setIsPlayerReady,
     audioInstanceRef,
+    shouldAutoPlay,
+    setShouldAutoPlay,
   };
 
   return (

@@ -21,7 +21,9 @@ const GlobalMusicPlayer = ({ theme = 'dark' }) => {
     playPrevious,
     setCurrentTrack,
     queue,
-    audioInstanceRef
+    audioInstanceRef,
+    shouldAutoPlay,
+    setShouldAutoPlay
   } = useContext(PlayerContext);
 
   const audioRef = useRef(null);
@@ -46,7 +48,7 @@ const GlobalMusicPlayer = ({ theme = 'dark' }) => {
     }
   }, [audioInstanceRef]);
 
-  // Fixed track loading effect
+  // Fixed track loading effect with auto-play support
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio || !currentTrack) return;
@@ -73,11 +75,21 @@ const GlobalMusicPlayer = ({ theme = 'dark' }) => {
     const handleCanPlay = () => {
       setIsLoading(false);
       setLoadedTrackId(currentTrackId);
-      // Only auto-play if user was previously playing
-      if (isPlaying) {
-        audio.play().catch(err => {
+      
+      // Auto-play if shouldAutoPlay is true OR if user was previously playing
+      if (shouldAutoPlay || isPlaying) {
+        audio.play().then(() => {
+          // Reset the auto-play flag after successful play
+          if (shouldAutoPlay) {
+            setShouldAutoPlay(false);
+          }
+        }).catch(err => {
           console.error('Auto-play failed:', err);
           setIsPlaying(false);
+          // Reset the auto-play flag even on error
+          if (shouldAutoPlay) {
+            setShouldAutoPlay(false);
+          }
         });
       }
     };
@@ -86,6 +98,10 @@ const GlobalMusicPlayer = ({ theme = 'dark' }) => {
       console.error('Audio load error for track:', currentTrack.title);
       setIsLoading(false);
       setIsPlaying(false);
+      // Reset the auto-play flag on error
+      if (shouldAutoPlay) {
+        setShouldAutoPlay(false);
+      }
     };
 
     audio.addEventListener('canplay', handleCanPlay);
@@ -98,7 +114,7 @@ const GlobalMusicPlayer = ({ theme = 'dark' }) => {
       audio.removeEventListener('canplay', handleCanPlay);
       audio.removeEventListener('error', handleError);
     };
-  }, [currentTrack, getTrackId, loadedTrackId, isPlaying]);
+  }, [currentTrack, getTrackId, loadedTrackId, isPlaying, shouldAutoPlay, setShouldAutoPlay]);
 
   // Audio event listeners
   useEffect(() => {
@@ -115,6 +131,8 @@ const GlobalMusicPlayer = ({ theme = 'dark' }) => {
         audio.currentTime = 0;
         audio.play();
       } else {
+        // Auto-play next track when current ends
+        setShouldAutoPlay(true);
         playNext({ shuffle: isShuffled });
       }
     };
@@ -135,7 +153,7 @@ const GlobalMusicPlayer = ({ theme = 'dark' }) => {
       audio.removeEventListener('play', onPlay);
       audio.removeEventListener('pause', onPause);
     };
-  }, [repeatMode, playNext, isShuffled]);
+  }, [repeatMode, playNext, isShuffled, setShouldAutoPlay]);
 
   const togglePlay = useCallback(() => {
     const audio = audioRef.current;
@@ -201,6 +219,7 @@ const GlobalMusicPlayer = ({ theme = 'dark' }) => {
     setIsPlaying(false);
     setCurrentTime(0);
     setDuration(0);
+    setShouldAutoPlay(false);
   };
 
   if (!currentTrack) return null;
@@ -245,7 +264,10 @@ const GlobalMusicPlayer = ({ theme = 'dark' }) => {
                   <Play className="w-5 h-5 ml-0.5" />
                 )}
               </button>
-              <button onClick={() => playNext({ shuffle: isShuffled })} className="text-zinc-500 hover:text-white">
+              <button onClick={() => {
+                setShouldAutoPlay(true);
+                playNext({ shuffle: isShuffled });
+              }} className="text-zinc-500 hover:text-white">
                 <SkipForward className="w-6 h-6" />
               </button>
               <button onClick={cycleRepeat} className={repeatMode ? 'text-white' : 'text-zinc-500 hover:text-white'}>

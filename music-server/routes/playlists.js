@@ -75,11 +75,17 @@ router.post('/:playlistId/tracks', async (req, res) => {
 router.get('/:id', (req, res) => {
   const id = req.params.id;
   try {
-    let tracks = getPlaylistById(id);
-
-    if (!Array.isArray(tracks) || tracks.length === 0) {
-      return res.status(404).json({ error: 'Playlist not found or empty' });
+    const playlist = db.prepare('SELECT * FROM playlists WHERE id = ?').get(id);
+    if (!playlist) {
+      return res.status(404).json({ error: 'Playlist not found' });
     }
+
+    let tracks = db.prepare(`
+      SELECT d.*, pt.playlist_id
+      FROM playlist_tracks pt
+      JOIN downloads d ON d.spotify_id = pt.spotify_id
+      WHERE pt.playlist_id = ?
+    `).all(id);
 
     tracks = tracks.map(track => {
       const filename = path.basename(track.file_path);
@@ -90,12 +96,20 @@ router.get('/:id', (req, res) => {
       };
     });
 
-    res.json(tracks);
+    res.json({
+      playlist: {
+        id: playlist.id,
+        name: playlist.name,
+        cover: playlist.cover,
+      },
+      tracks
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to retrieve playlist' });
   }
 });
+
 
 router.get('/', (req, res) => {
   try {
