@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useContext } from 'react';
+import React, { useEffect, useRef, useState, useContext, useCallback } from 'react';
 import { PlayerContext } from '../context/PlayerContext';
 import {
   Play,
@@ -21,6 +21,7 @@ const GlobalMusicPlayer = ({ theme = 'dark' }) => {
     playPrevious,
     setCurrentTrack,
     queue,
+    audioInstanceRef
   } = useContext(PlayerContext);
 
   const audioRef = useRef(null);
@@ -31,70 +32,75 @@ const GlobalMusicPlayer = ({ theme = 'dark' }) => {
   const [isMuted, setIsMuted] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
   const [isShuffled, setIsShuffled] = useState(false);
-  const [repeatMode, setRepeatMode] = useState(0); // 0: off, 1: repeat all, 2: repeat one
+  const [repeatMode, setRepeatMode] = useState(0);
   const [loadedTrackId, setLoadedTrackId] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const getTrackId = (track) => track ? `${track.url}-${track.title}-${track.artist}` : null;
+  const getTrackId = useCallback((track) => 
+    track ? `${track.url}-${track.title}-${track.artist}` : null, []);
 
-  const getCurrentIndex = () => {
-    if (!queue || !currentTrack) return -1;
-    return queue.findIndex(t => t.spotify_id === currentTrack.spotify_id);
-  };
-
-  const playNextTrack = () => {
-    if (!queue || queue.length === 0) return;
-    const currentIndex = getCurrentIndex();
-
-    if (repeatMode === 2) {
-      audioRef.current.currentTime = 0;
-      audioRef.current.play();
-      return;
+  // Store audio ref in context for global access
+  useEffect(() => {
+    if (audioRef.current) {
+      audioInstanceRef.current = audioRef.current;
     }
+  }, [audioInstanceRef]);
 
-    if (isShuffled) {
-      const nextIndex = Math.floor(Math.random() * queue.length);
-      setCurrentTrack(queue[nextIndex]);
-    } else {
-      const nextIndex = (currentIndex + 1) % queue.length;
-      if (nextIndex === 0 && repeatMode === 0) {
-        setIsPlaying(false);
-      } else {
-        setCurrentTrack(queue[nextIndex]);
-      }
-    }
-  };
-
-  const playPreviousTrack = () => {
-    if (!queue || queue.length === 0) return;
-    const currentIndex = getCurrentIndex();
-    const prevIndex = (currentIndex - 1 + queue.length) % queue.length;
-    setCurrentTrack(queue[prevIndex]);
-  };
-
+  // Fixed track loading effect
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio || !currentTrack) return;
 
     const currentTrackId = getTrackId(currentTrack);
-    if (currentTrackId !== loadedTrackId) {
-      setIsLoading(true);
-      audio.src = currentTrack.url;
-      audio.load();
-      audio.oncanplay = () => {
-        audio.play().then(() => {
-          setIsPlaying(true);
-          setIsLoading(false);
-          setLoadedTrackId(currentTrackId);
-        }).catch(err => {
-          console.error('Play error:', err);
-          setIsPlaying(false);
-          setIsLoading(false);
-        });
-      };
-    }
-  }, [currentTrack]);
+    
+    // Prevent double loading of same track
+    if (currentTrackId === loadedTrackId) return;
 
+    setIsLoading(true);
+    
+    // Stop current audio if playing
+    if (!audio.paused) {
+      audio.pause();
+    }
+
+    // Clear previous source
+    audio.src = '';
+    audio.load();
+
+    // Set new source
+    audio.src = currentTrack.url;
+    
+    const handleCanPlay = () => {
+      setIsLoading(false);
+      setLoadedTrackId(currentTrackId);
+      // Only auto-play if user was previously playing
+      if (isPlaying) {
+        audio.play().catch(err => {
+          console.error('Auto-play failed:', err);
+          setIsPlaying(false);
+        });
+      }
+    };
+
+    const handleError = () => {
+      console.error('Audio load error for track:', currentTrack.title);
+      setIsLoading(false);
+      setIsPlaying(false);
+    };
+
+    audio.addEventListener('canplay', handleCanPlay);
+    audio.addEventListener('error', handleError);
+    
+    // Load the audio
+    audio.load();
+
+    return () => {
+      audio.removeEventListener('canplay', handleCanPlay);
+      audio.removeEventListener('error', handleError);
+    };
+  }, [currentTrack, getTrackId, loadedTrackId, isPlaying]);
+
+  // Audio event listeners
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -109,37 +115,41 @@ const GlobalMusicPlayer = ({ theme = 'dark' }) => {
         audio.currentTime = 0;
         audio.play();
       } else {
-        playNextTrack();
+        playNext({ shuffle: isShuffled });
       }
     };
+
+    const onPlay = () => setIsPlaying(true);
+    const onPause = () => setIsPlaying(false);
 
     audio.addEventListener('timeupdate', updateTime);
     audio.addEventListener('loadedmetadata', updateDuration);
     audio.addEventListener('ended', onEnded);
+    audio.addEventListener('play', onPlay);
+    audio.addEventListener('pause', onPause);
 
     return () => {
       audio.removeEventListener('timeupdate', updateTime);
       audio.removeEventListener('loadedmetadata', updateDuration);
       audio.removeEventListener('ended', onEnded);
+      audio.removeEventListener('play', onPlay);
+      audio.removeEventListener('pause', onPause);
     };
-  }, [repeatMode, queue, currentTrack, isShuffled]);
+  }, [repeatMode, playNext, isShuffled]);
 
-  const togglePlay = () => {
+  const togglePlay = useCallback(() => {
     const audio = audioRef.current;
-    if (!audio) return;
+    if (!audio || isLoading) return;
 
     if (isPlaying) {
       audio.pause();
-      setIsPlaying(false);
     } else {
-      audio.play()
-        .then(() => setIsPlaying(true))
-        .catch(err => {
-          console.error('Play error:', err);
-          setIsPlaying(false);
-        });
+      audio.play().catch(err => {
+        console.error('Play error:', err);
+        setIsPlaying(false);
+      });
     }
-  };
+  }, [isPlaying, isLoading]);
 
   const formatTime = (time) => {
     if (!time || isNaN(time)) return '0:00';
@@ -150,6 +160,8 @@ const GlobalMusicPlayer = ({ theme = 'dark' }) => {
 
   const handleProgressClick = (e) => {
     const audio = audioRef.current;
+    if (!audio || !duration) return;
+    
     const rect = e.currentTarget.getBoundingClientRect();
     const percent = (e.clientX - rect.left) / rect.width;
     const newTime = percent * duration;
@@ -217,12 +229,13 @@ const GlobalMusicPlayer = ({ theme = 'dark' }) => {
               <button onClick={() => setIsShuffled(!isShuffled)} className={isShuffled ? 'text-white' : 'text-zinc-500 hover:text-white'}>
                 <Shuffle className="w-5 h-5" />
               </button>
-              <button onClick={playPreviousTrack} className="text-zinc-500 hover:text-white">
+              <button onClick={playPrevious} className="text-zinc-500 hover:text-white">
                 <SkipBack className="w-6 h-6" />
               </button>
               <button
                 onClick={togglePlay}
-                className="bg-white text-black rounded-full w-10 h-10 flex items-center justify-center hover:scale-110 transition"
+                disabled={isLoading}
+                className="bg-white text-black rounded-full w-10 h-10 flex items-center justify-center hover:scale-110 transition disabled:opacity-50"
               >
                 {isLoading ? (
                   <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin" />
@@ -237,6 +250,7 @@ const GlobalMusicPlayer = ({ theme = 'dark' }) => {
               </button>
               <button onClick={cycleRepeat} className={repeatMode ? 'text-white' : 'text-zinc-500 hover:text-white'}>
                 <Repeat className="w-5 h-5" />
+                {repeatMode === 2 && <span className="absolute -top-1 -right-1 text-xs">1</span>}
               </button>
             </div>
             <div className="flex items-center gap-2 w-full">
@@ -266,7 +280,7 @@ const GlobalMusicPlayer = ({ theme = 'dark' }) => {
             </button>
           </div>
         </div>
-        <audio ref={audioRef} />
+        <audio ref={audioRef} preload="metadata" />
       </div>
     </div>
   );
