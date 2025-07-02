@@ -52,7 +52,10 @@ const DownloadedTracks = () => {
               key={track.id}
               track={track}
               onDelete={handleDelete}
-              onPlay={() => setCurrentTrack(track)}
+              onPlay={() => {
+                setCurrentTrack(track);
+                setShouldAutoPlay(true);
+              }}
               isPlaying={currentTrack?.spotify_id === track.spotify_id}
             />
           ))}

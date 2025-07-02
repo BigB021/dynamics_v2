@@ -11,31 +11,30 @@ const PlaylistDetail = () => {
 
   const { setCurrentTrack, setQueue, currentTrack } = useContext(PlayerContext);
 
-  useEffect(() => {
-    fetch(`http://localhost:3000/api/playlists/${id}`)
-      .then(res => res.json())
-      .then(data => {
-        const enriched = data
-          .filter(track => track.file_path)
-          .map(track => ({
-            ...track,
-            url: `http://localhost:3000/media/${track.file_path.split('/').pop()}`,
-            cover: track.cover ? `http://localhost:3000/media/${track.cover}` : null,
-          }));
-
-        setTracks(enriched);
-
-        if (enriched.length > 0) {
+    useEffect(() => {
+      fetch(`http://localhost:3000/api/playlists/${id}`)
+        .then(res => res.json())
+        .then(data => {
+          const { playlist, tracks } = data;
+        
+          const enriched = tracks
+            .filter(track => track.file_path)
+            .map(track => ({
+              ...track,
+              url: `http://localhost:3000/media/${track.file_path.split('/').pop()}`,
+              cover: track.cover ? `http://localhost:3000/media/${track.cover}` : null,
+            }));
+        
+          setTracks(enriched);
           setPlaylistInfo({
-            name: enriched[0].playlist_name || 'Untitled Playlist',
-            cover: enriched[0].playlist_cover,
+            name: playlist.name || 'Untitled Playlist',
+            cover: playlist.cover,
             trackCount: enriched.length,
           });
-        }
-      })
-      .catch(console.error);
-  }, [id]);
-
+        })
+        .catch(console.error);
+    }, [id]);
+    
   const handlePlay = (track) => {
     setQueue(tracks);
     setCurrentTrack(track);
