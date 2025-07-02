@@ -3,18 +3,45 @@ import { Play, MoreVertical } from 'lucide-react';
 
 const TrackCard = ({ track, onDelete, onPlay }) => {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [playlists, setPlaylists] = useState([]);
+  const [playlistMenuOpen, setPlaylistMenuOpen] = useState(false);
   const menuRef = useRef();
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (menuRef.current && !menuRef.current.contains(event.target)) {
         setMenuOpen(false);
+        setPlaylistMenuOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  const fetchPlaylists = () => {
+    fetch('http://localhost:3000/api/playlists')
+      .then(res => res.json())
+      .then(setPlaylists)
+      .catch(console.error);
+  };
+
+  const handleAddToPlaylist = (playlistId) => {
+    fetch(`http://localhost:3000/api/playlists/${playlistId}/tracks`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ spotifyId: track.spotify_id }),
+    })
+      .then(res => res.json())
+      .then(data => {
+        alert('Added to playlist');
+        setMenuOpen(false);
+        setPlaylistMenuOpen(false);
+      })
+      .catch(err => {
+        alert('Failed to add track');
+        console.error(err);
+      });
+  };
 
   return (
     <div
@@ -42,19 +69,21 @@ const TrackCard = ({ track, onDelete, onPlay }) => {
         <div className="text-xs text-zinc-400 dark:text-zinc-500 truncate">{track.filename}</div>
       </div>
 
-      {/* 3-dot Menu */}
+      {/* Dropdown Menu */}
       <div className="absolute top-3 right-3" ref={menuRef}>
         <button
           onClick={(e) => {
             e.stopPropagation();
-            setMenuOpen((prev) => !prev);
+            setMenuOpen(!menuOpen);
+            fetchPlaylists();
           }}
           className="p-1.5 rounded-full bg-zinc-200 dark:bg-zinc-700 hover:bg-zinc-300 dark:hover:bg-zinc-600 text-zinc-800 dark:text-white shadow"
         >
           <MoreVertical size={18} />
         </button>
+
         {menuOpen && (
-          <div className="absolute right-0 mt-2 w-40 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded shadow-lg z-10">
+          <div className="absolute right-0 mt-2 w-44 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded shadow-lg z-10">
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -65,16 +94,33 @@ const TrackCard = ({ track, onDelete, onPlay }) => {
             >
               Delete
             </button>
+
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                alert('Add to queue (not yet implemented)');
-                setMenuOpen(false);
+                setPlaylistMenuOpen(!playlistMenuOpen);
               }}
               className="block w-full text-left px-4 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-700"
             >
-              Add to Queue
+              Add to Playlist
             </button>
+
+            {playlistMenuOpen && (
+              <div className="max-h-40 overflow-auto">
+                {playlists.map(pl => (
+                  <button
+                    key={pl.id}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleAddToPlaylist(pl.id);
+                    }}
+                    className="block w-full text-left px-4 py-2 text-sm hover:bg-blue-100 dark:hover:bg-blue-700 text-blue-600 dark:text-blue-300"
+                  >
+                    {pl.name}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>
