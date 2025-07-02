@@ -69,7 +69,7 @@ const PlaylistPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-gray-800 dark:to-indigo-900 text-theme.neon.text flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-zinc-950 dark:via-zinc-900 dark:to-indigo-950 text-theme.neon.text flex flex-col">
       <div className="p-8 max-w-7xl mx-auto flex-grow">
         {/* Header */}
         <div className="flex justify-between items-center mb-12">
@@ -143,7 +143,7 @@ const PlaylistPage = () => {
           {playlists.map(pl => (
             <div
               key={pl.id}
-              className="group relative bg-[rgba(255,255,255,0.05)] backdrop-blur-md rounded-3xl p-6 hover:bg-[rgba(255,255,255,0.1)] transition-transform duration-300 hover:scale-[1.03] hover:shadow-[0_8px_30px_rgb(34,211,238,0.3)] border border-[rgba(255,255,255,0.15)]"
+              className="group relative bg-[rgba(255,255,255,0.05)] backdrop-blur-md rounded-3xl p-6 hover:bg-[rgba(255,255,255,0.05)] transition-transform duration-300 hover:scale-[1.03] hover:shadow-[0_8px_30px_rgb(134,90,198,0.1)] border border-[rgba(255,255,255,0.08)]"
             >
               <Link to={`/playlist/${pl.id}`} className="block rounded-2xl overflow-hidden shadow-lg">
                 <div className="relative overflow-hidden rounded-2xl">

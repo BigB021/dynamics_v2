@@ -2,7 +2,9 @@ const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const { db,getPlaylistById,getAllPlaylists, createPlaylist,addTrackToPlaylist } = require('../db/db'); // ✅ Destructure the actual db instance
+const { parseFile } = require('music-metadata');
+
+const { db, getPlaylistById, getAllPlaylists, createPlaylist, addTrackToPlaylist } = require('../db/db');
 
 const router = express.Router();
 const uploadDir = path.resolve(__dirname, '../media/playlist_covers');
@@ -28,9 +30,7 @@ router.post('/', upload.single('cover'), (req, res) => {
   const cover = req.file ? `playlist_covers/${req.file.filename}` : null;
 
   try {
-    // Just call the function — it already runs the statement and returns the result
     const result = createPlaylist(name, cover);
-
     const newPlaylist = { id: result.lastInsertRowid, name, cover };
     res.status(201).json(newPlaylist);
   } catch (err) {
@@ -40,13 +40,32 @@ router.post('/', upload.single('cover'), (req, res) => {
 });
 
 // POST /api/playlists/:playlistId/tracks
-router.post('/:playlistId/tracks', (req, res) => {
+router.post('/:playlistId/tracks', async (req, res) => {
   const { playlistId } = req.params;
   const { spotifyId } = req.body;
 
   try {
+    const download = db.prepare('SELECT * FROM downloads WHERE spotify_id = ?').get(spotifyId);
+
+    if (!download) {
+      return res.status(404).json({ error: 'Track not found' });
+    }
+
+    if (download.duration === null || download.duration === undefined) {
+      if (fs.existsSync(download.file_path)) {
+        try {
+          const metadata = await parseFile(download.file_path);
+          const duration = Math.round(metadata.format.duration || 0);
+          db.prepare('UPDATE downloads SET duration = ? WHERE spotify_id = ?').run(duration, spotifyId);
+        } catch (err) {
+          console.warn('Failed to parse duration:', err);
+        }
+      }
+    }
+
     const result = addTrackToPlaylist(playlistId, spotifyId);
-    res.status(201).json({ message: 'Track added to playlist', result });
+    const updatedDownload = db.prepare('SELECT * FROM downloads WHERE spotify_id = ?').get(spotifyId);
+    res.status(201).json({ message: 'Track added to playlist', result, track:updatedDownload });
   } catch (err) {
     console.error('Failed to add track:', err);
     res.status(500).json({ error: 'Failed to add track to playlist' });
@@ -62,13 +81,11 @@ router.get('/:id', (req, res) => {
       return res.status(404).json({ error: 'Playlist not found or empty' });
     }
 
-    // Map over tracks and add a 'filename' field extracted from absolute file_path
     tracks = tracks.map(track => {
-      const filename = path.basename(track.file_path); // e.g. "Offset - Bodies.mp3"
+      const filename = path.basename(track.file_path);
       return {
         ...track,
-        filename,        // Add this for frontend
-        // optionally you can also add a url property here if you want:
+        filename,
         url: `/media/${filename}`
       };
     });
@@ -101,7 +118,5 @@ router.delete('/:id', (req, res) => {
     res.status(500).json({ error: 'Failed to delete' });
   }
 });
-
-
 
 module.exports = router;

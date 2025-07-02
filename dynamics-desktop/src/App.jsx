@@ -11,7 +11,7 @@ function App() {
   const [query, setQuery] = useState('');
 
   return (
-    <div className="min-h-screen bg-neutral-100 dark:bg-neutral-900 text-neutral-900 dark:text-white">
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 via-blue-50 to-indigo-100 dark:from-zinc-900 dark:via-zinc-900 dark:to-indigo-950 text-neutral-900 dark:text-white">
       <Header query={query} setQuery={setQuery} />
 
       <Routes>

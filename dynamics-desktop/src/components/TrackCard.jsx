@@ -55,11 +55,7 @@ const TrackCard = ({ track, onDelete, onPlay }) => {
           alt={`${track.title} cover`}
           className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
         />
-        <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition">
-          <div className="p-2 bg-blue-600 text-white rounded-full shadow-lg">
-            <Play size={20} />
-          </div>
-        </div>
+        
       </div>
 
       {/* Metadata */}
@@ -67,6 +63,11 @@ const TrackCard = ({ track, onDelete, onPlay }) => {
         <div className="text-lg font-semibold text-zinc-800 dark:text-white truncate">{track.title}</div>
         <div className="text-sm text-zinc-500 dark:text-zinc-400 truncate">{track.artist}</div>
         <div className="text-xs text-zinc-400 dark:text-zinc-500 truncate">{track.filename}</div>
+        <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition">
+          <div className="p-2 bg-indigo-800 text-white rounded-full shadow-lg">
+            <Play size={20} />
+          </div>
+        </div>
       </div>
 
       {/* Dropdown Menu */}
@@ -106,7 +107,7 @@ const TrackCard = ({ track, onDelete, onPlay }) => {
             </button>
 
             {playlistMenuOpen && (
-              <div className="max-h-40 overflow-auto">
+              <div className="max-h-40  overflow-auto">
                 {playlists.map(pl => (
                   <button
                     key={pl.id}
@@ -114,7 +115,7 @@ const TrackCard = ({ track, onDelete, onPlay }) => {
                       e.stopPropagation();
                       handleAddToPlaylist(pl.id);
                     }}
-                    className="block w-full text-left px-4 py-2 text-sm hover:bg-blue-100 dark:hover:bg-blue-700 text-blue-600 dark:text-blue-300"
+                    className="block w-full text-left px-4 py-2 text-sm hover:bg-blue-100 dark:hover:bg-indigo-900 text-indigo-600 dark:text-blue-300"
                   >
                     {pl.name}
                   </button>
