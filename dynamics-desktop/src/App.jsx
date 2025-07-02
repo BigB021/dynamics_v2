@@ -6,7 +6,6 @@ import Header from './components/Header';
 import GlobalMusicPlayer from './components/GlobalMusicPlayer';
 import PlaylistPage from './components/PlaylistPage';
 import PlaylistDetail from './components/PlaylistDetail';
-import CreatePlaylist from './components/CreatePlaylist';
 
 function App() {
   const [query, setQuery] = useState('');
@@ -23,7 +22,6 @@ function App() {
         <Route path="/downloads" element={<DownloadedTracks />} />
         <Route path="/playlists" element={<PlaylistPage />} />
         <Route path="/playlist/:id" element={<PlaylistDetail />} />
-        <Route path="/playlists/create" element={<CreatePlaylist />} />
       </Routes>
 
       <GlobalMusicPlayer />
