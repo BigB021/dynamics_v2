@@ -3,7 +3,7 @@ const path = require('path');
 
 const db = new Database(path.resolve(__dirname, 'downloads.db'));
 
-// Initialize `downloads` table (already present in your code)
+// Downloads table (tracks)
 db.prepare(`
   CREATE TABLE IF NOT EXISTS downloads (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -20,7 +20,19 @@ db.prepare(`
   )
 `).run();
 
-// Initialize `playlists` table
+// Albums table
+db.prepare(`
+  CREATE TABLE IF NOT EXISTS albums (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    artist TEXT,
+    cover TEXT,
+    release_date TEXT,
+    UNIQUE(name, artist)
+  )
+`).run();
+
+// Playlists table
 db.prepare(`
   CREATE TABLE IF NOT EXISTS playlists (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -30,7 +42,7 @@ db.prepare(`
   )
 `).run();
 
-// Initialize `playlist_tracks` relation table
+// Playlist ↔ Track relation table
 db.prepare(`
   CREATE TABLE IF NOT EXISTS playlist_tracks (
     playlist_id INTEGER NOT NULL,
@@ -41,12 +53,14 @@ db.prepare(`
   )
 `).run();
 
-// Export both the DB instance and the helper methods
 module.exports = {
-  db, 
+  db,
+
+  // === TRACKS ===
   addDownload(spotifyId, filePath, status, artist = null, title = null, album = null, duration = null, releaseDate = null, cover = null) {
     const stmt = db.prepare(`
-      INSERT OR REPLACE INTO downloads (spotify_id, file_path, status, artist, title, album, duration, release_date, cover)
+      INSERT OR REPLACE INTO downloads 
+        (spotify_id, file_path, status, artist, title, album, duration, release_date, cover)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
     stmt.run(spotifyId, filePath, status, artist, title, album, duration, releaseDate, cover);
@@ -64,6 +78,61 @@ module.exports = {
     return db.prepare('SELECT * FROM downloads WHERE status = ?').all('downloaded');
   },
 
+  getDownloadsByAlbum(albumName) {
+    return db.prepare(`
+      SELECT * FROM downloads 
+      WHERE album = ?
+      ORDER BY release_date DESC
+    `).all(albumName);
+  },
+
+  // === ALBUMS ===
+  addAlbum(name, artist = null, cover = null, releaseDate = null) {
+    const existing = db.prepare(`
+      SELECT id FROM albums WHERE name = ? AND artist IS ?
+    `).get(name, artist);
+
+    if (existing) return existing.id;
+
+    const result = db.prepare(`
+      INSERT INTO albums (name, artist, cover, release_date)
+      VALUES (?, ?, ?, ?)
+    `).run(name, artist, cover, releaseDate);
+
+    return result.lastInsertRowid;
+  },
+
+  getAlbumByName(name) {
+    return db.prepare(`SELECT * FROM albums WHERE name = ?`).get(name);
+  },
+
+  getAllAlbums() {
+    return db.prepare(`
+      SELECT
+        album AS name,
+        artist,
+        MIN(release_date) AS release_date,
+        (
+          SELECT cover
+          FROM downloads AS d2
+          WHERE d2.album = d1.album AND d2.cover IS NOT NULL
+          LIMIT 1
+        ) AS cover
+      FROM downloads AS d1
+      WHERE album IS NOT NULL AND status = 'downloaded'
+      GROUP BY album, artist
+      ORDER BY MAX(downloaded_at) DESC
+    `).all();
+  },
+
+  getTracksByAlbum(albumName) {
+    return db.prepare(`
+      SELECT * FROM downloads
+      WHERE album = ?
+      ORDER BY downloaded_at ASC
+    `).all(albumName);
+  },
+  // === PLAYLISTS ===
   createPlaylist(name, cover = null) {
     return db.prepare('INSERT INTO playlists (name, cover) VALUES (?, ?)').run(name, cover);
   },
@@ -81,10 +150,16 @@ module.exports = {
   },
 
   addTrackToPlaylist(playlistId, spotifyId) {
-    return db.prepare('INSERT OR IGNORE INTO playlist_tracks (playlist_id, spotify_id) VALUES (?, ?)').run(playlistId, spotifyId);
+    return db.prepare(`
+      INSERT OR IGNORE INTO playlist_tracks (playlist_id, spotify_id)
+      VALUES (?, ?)
+    `).run(playlistId, spotifyId);
   },
 
   removeTrackFromPlaylist(playlistId, spotifyId) {
-    return db.prepare('DELETE FROM playlist_tracks WHERE playlist_id = ? AND spotify_id = ?').run(playlistId, spotifyId);
+    return db.prepare(`
+      DELETE FROM playlist_tracks 
+      WHERE playlist_id = ? AND spotify_id = ?
+    `).run(playlistId, spotifyId);
   }
 };
