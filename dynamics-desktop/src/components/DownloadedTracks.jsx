@@ -5,7 +5,7 @@ import { PlayerContext } from '../context/PlayerContext';
 
 const DownloadedTracks = () => {
   const [tracks, setTracks] = useState([]);
-  const { currentTrack, setCurrentTrack } = useContext(PlayerContext);
+  const { currentTrack, playTrack, setQueue } = useContext(PlayerContext);
 
   const handleDelete = (spotifyId) => {
     fetch(`http://localhost:3000/api/downloaded/${spotifyId}`, {
@@ -52,12 +52,9 @@ const DownloadedTracks = () => {
               key={track.id}
               track={track}
               onDelete={handleDelete}
-              onPlay={() => {
-                setCurrentTrack(track);
-                setShouldAutoPlay(true);
-              }}
+              onPlay={() => playTrack(track, tracks)} // ✅ pass full queue here!
               isPlaying={currentTrack?.spotify_id === track.spotify_id}
-            />
+            /> 
           ))}
         </div>
       )}

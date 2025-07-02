@@ -56,7 +56,10 @@ const GlobalMusicPlayer = ({ theme = 'dark' }) => {
     const currentTrackId = getTrackId(currentTrack);
     
     // Prevent double loading of same track
-    if (currentTrackId === loadedTrackId) return;
+    if (currentTrackId === loadedTrackId) {
+      return;
+    }
+
 
     setIsLoading(true);
     
