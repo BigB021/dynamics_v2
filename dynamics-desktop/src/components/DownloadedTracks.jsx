@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import { Music2 } from 'lucide-react';
-import GlobalMusicPlayer from './GlobalMusicPlayer';
 import TrackCard from './TrackCard';
+import { PlayerContext } from '../context/PlayerContext';
 
 const DownloadedTracks = () => {
   const [tracks, setTracks] = useState([]);
-  const [currentTrack, setCurrentTrack] = useState(null);
+  const { currentTrack, setCurrentTrack } = useContext(PlayerContext);
 
   const handleDelete = (spotifyId) => {
     fetch(`http://localhost:3000/api/downloaded/${spotifyId}`, {
@@ -53,15 +53,11 @@ const DownloadedTracks = () => {
               track={track}
               onDelete={handleDelete}
               onPlay={() => setCurrentTrack(track)}
+              isPlaying={currentTrack?.spotify_id === track.spotify_id}
             />
           ))}
         </div>
       )}
-
-      <GlobalMusicPlayer
-        currentTrack={currentTrack}
-        onClose={() => setCurrentTrack(null)}
-      />
     </div>
   );
 };

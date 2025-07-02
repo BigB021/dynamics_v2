@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Moon, Sun, Download, Home, Settings, Search as SearchIcon } from 'lucide-react';
+import { List,Moon, Sun, Download, Home, Settings, Search as SearchIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const Header = ({ query, setQuery }) => {
@@ -25,7 +25,7 @@ const Header = ({ query, setQuery }) => {
     <header className="flex items-center justify-between px-6 py-3 bg-white dark:bg-zinc-900 dark:text-white border-b dark:border-zinc-700 shadow-sm">
       {/* Left: Logo */}
       <div className="flex items-center gap-3">
-        <img src="/logo.png" alt="Logo" className="w-8 h-8" />
+        {/* <img src="/logo.png" alt="Logo" className="w-8 h-8" /> */}
         <span className="font-bold text-lg tracking-tight">Dynamics</span>
       </div>
 
@@ -35,6 +35,7 @@ const Header = ({ query, setQuery }) => {
       <div className="flex items-center gap-4">
         <NavIcon icon={<Home size={18} />} label="Home" onClick={() => navigate('/')} />
         <NavIcon icon={<Download size={18} />} label="Downloads" onClick={() => navigate('/downloads')} />
+        <NavIcon icon={<List size={18} />} label="Playlists" onClick={() => navigate('/playlists')} />
 
         <button
           onClick={toggleTheme}

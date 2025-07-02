@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react';
 import axios from 'axios';
 import { Play, Download, Loader2 } from 'lucide-react';
+import { PlayerContext } from '../context/PlayerContext';
 
 const extractSpotifyId = (url) => {
   const match = url.match(/track\/([a-zA-Z0-9]+)/);
@@ -16,6 +17,7 @@ const SearchResultItem = ({ track, onPlay }) => {
   const [downloaded, setDownloaded] = useState(false);
   const [fileUrl, setFileUrl] = useState('');
   const eventSourceRef = useRef(null);
+  const { setCurrentTrack } = useContext(PlayerContext);
 
   const spotifyId = extractSpotifyId(track.url);
 
@@ -27,8 +29,7 @@ const SearchResultItem = ({ track, onPlay }) => {
       .then((res) => {
         if (res.data.downloaded) {
           setDownloaded(true);
-          const fileName = `${sanitizeFileName(track.artist)} - ${sanitizeFileName(track.name)}.mp3`;
-          setFileUrl(`http://localhost:3000/media/${encodeURIComponent(fileName)}`);
+          setFileUrl(`http://localhost:3000/media/${encodeURIComponent(res.data.filePath)}`);
         }
       })
       .catch(console.error);
@@ -75,11 +76,12 @@ const SearchResultItem = ({ track, onPlay }) => {
   };
 
   const handlePlay = () => {
-    if (onPlay && fileUrl) {
-      onPlay({
+    if (fileUrl) {
+      setCurrentTrack({
         artist: track.artist,
         title: track.name,
         url: fileUrl,
+        cover: track.cover || '/default_cover.jpg',
       });
     }
   };
