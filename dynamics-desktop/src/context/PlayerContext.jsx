@@ -1,4 +1,4 @@
-import { createContext, useState, useRef, useEffect } from 'react';
+import { createContext, useState, useRef, useEffect,useCallback } from 'react';
 
 export const PlayerContext = createContext();
 
@@ -14,34 +14,41 @@ export const PlayerProvider = ({ children }) => {
     : null;
 
   // Safely set current track by index
-  const setCurrentTrackByIndex = (index) => {
+  const setCurrentTrackByIndex = useCallback((index) => {
     if (index >= 0 && index < queue.length) {
       setCurrentIndex(index);
     }
-  };
+  }, [queue.length]);
 
   // Safely set current track by track object
-  const setCurrentTrack = (track) => {
+const setCurrentTrack = useCallback((track) => {
     if (!track) {
       setCurrentIndex(-1);
       return;
     }
-    const foundIndex = queue.findIndex(
-      (t) =>
-        t.url === track.url &&
-        t.title === track.title &&
-        t.artist === track.artist
-    );
-    if (foundIndex !== -1) {
-      setCurrentIndex(foundIndex);
-    } else {
-      // If track not in queue, append it
-      setQueue((prev) => [...prev, track]);
-      setCurrentIndex(queue.length); // new index at the end
-    }
-  };
 
-  const playNext = ({ shuffle = false } = {}) => {
+    setQueue((prevQueue) => {
+      const foundIndex = prevQueue.findIndex(
+        (t) =>
+          t.url === track.url &&
+          t.title === track.title &&
+          t.artist === track.artist
+      );
+
+      if (foundIndex !== -1) {
+        // Track exists, just update index
+        setCurrentIndex(foundIndex);
+        return prevQueue;
+      } else {
+        // Track doesn't exist, add it to queue
+        const newQueue = [...prevQueue, track];
+        setCurrentIndex(newQueue.length - 1); // Use newQueue.length - 1
+        return newQueue;
+      }
+    });
+  }, []);
+
+const playNext = useCallback(({ shuffle = false } = {}) => {
     if (queue.length === 0) return;
 
     if (shuffle) {
@@ -55,15 +62,15 @@ export const PlayerProvider = ({ children }) => {
         prev + 1 >= queue.length ? 0 : prev + 1
       );
     }
-  };
+  }, [queue.length, currentIndex]);
 
-  const playPrevious = () => {
+  const playPrevious = useCallback(() => {
     if (queue.length === 0) return;
 
     setCurrentIndex((prev) =>
       prev - 1 < 0 ? queue.length - 1 : prev - 1
     );
-  };
+  }, [queue.length]);
 
   useEffect(() => {
     const handleBeforeUnload = () => {
