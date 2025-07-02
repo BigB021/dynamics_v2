@@ -2,13 +2,13 @@ import React, { useState, useRef, useEffect, useContext } from 'react';
 import { Play, MoreVertical } from 'lucide-react';
 import { PlayerContext } from '../context/PlayerContext';
 
-const TrackCard = ({ track, onDelete }) => {
+const TrackCard = ({ track, onDelete,onPlay }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [playlists, setPlaylists] = useState([]);
   const [playlistMenuOpen, setPlaylistMenuOpen] = useState(false);
   const menuRef = useRef();
 
-  const { setCurrentTrack, setQueue, currentTrack, setShouldAutoPlay } = useContext(PlayerContext);
+  const { setCurrentTrack, setQueue, currentTrack, setShouldAutoPlay, playTrack } = useContext(PlayerContext);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -46,16 +46,20 @@ const TrackCard = ({ track, onDelete }) => {
       });
   };
 
-  const handleTrackClick = () => {
-    // Signal that we want to auto-play this track
-    setShouldAutoPlay(true);
-    
-    // Set the current track to trigger playback
-    setCurrentTrack(track);
-    
-    // Optionally set a queue with just this track, or you could pass a full queue
-    setQueue([track]);
-  };
+  // handle click with debounce
+    const clickLock = useRef(false);
+
+    const handleTrackClick = () => {
+      if (clickLock.current) return;
+      clickLock.current = true;
+      setTimeout(() => (clickLock.current = false), 200);
+
+      // Force reset currentTrack to null first
+    if (onPlay) {
+        onPlay();
+      }    };
+
+
 
   const isCurrentTrack = currentTrack?.spotify_id === track.spotify_id;
 

@@ -94,6 +94,16 @@ const playNext = useCallback(({ shuffle = false } = {}) => {
     };
   }, []);
 
+  const playTrack = (track, queue = [track]) => {
+    setCurrentTrack(null);
+    setTimeout(() => {
+      setQueue(queue);
+      setShouldAutoPlay(true);
+      setCurrentTrack({ ...track });
+    }, 50);
+  };
+
+
   const value = {
     currentTrack,
     currentIndex,
@@ -108,6 +118,7 @@ const playNext = useCallback(({ shuffle = false } = {}) => {
     audioInstanceRef,
     shouldAutoPlay,
     setShouldAutoPlay,
+    playTrack,
   };
 
   return (

@@ -16,7 +16,7 @@ const PlaylistDetail = () => {
         .then(res => res.json())
         .then(data => {
           const { playlist, tracks } = data;
-        
+
           const enriched = tracks
             .filter(track => track.file_path)
             .map(track => ({
@@ -24,7 +24,7 @@ const PlaylistDetail = () => {
               url: `http://localhost:3000/media/${track.file_path.split('/').pop()}`,
               cover: track.cover ? `http://localhost:3000/media/${track.cover}` : null,
             }));
-        
+
           setTracks(enriched);
           setPlaylistInfo({
             name: playlist.name || 'Untitled Playlist',
@@ -34,7 +34,7 @@ const PlaylistDetail = () => {
         })
         .catch(console.error);
     }, [id]);
-    
+
   const handlePlay = (track) => {
     setQueue(tracks);
     setCurrentTrack(track);
