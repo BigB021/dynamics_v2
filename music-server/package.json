@@ -18,7 +18,7 @@
     "dotenv": "^17.0.0",
     "express": "^5.1.0",
     "multer": "^2.0.1",
-    "music-metadata": "^11.5.0",
+    "music-metadata": "^11.6.0",
     "node-fetch": "^2.7.0",
     "sqlite3": "^5.1.7",
     "uuid": "^11.1.0"
