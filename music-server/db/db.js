@@ -24,6 +24,7 @@ db.prepare(`
 db.prepare(`
   CREATE TABLE IF NOT EXISTS albums (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    spotify_id TEXT UNIQUE,
     name TEXT NOT NULL,
     artist TEXT,
     cover TEXT,
@@ -99,42 +100,45 @@ module.exports = {
   },
 
   // === ALBUMS ===
-  addAlbum(name, artist = null, cover = null, releaseDate = null) {
+  addAlbum(name, artist = null, cover = null, releaseDate = null, spotifyId = null) {
     const existing = db.prepare(`
-      SELECT id FROM albums WHERE name = ? AND artist IS ?
-    `).get(name, artist);
+      SELECT id FROM albums WHERE name = ? AND (artist = ? OR (artist IS NULL AND ? IS NULL))
+    `).get(name, artist, artist);
 
     if (existing) return existing.id;
 
     const result = db.prepare(`
-      INSERT INTO albums (name, artist, cover, release_date)
-      VALUES (?, ?, ?, ?)
-    `).run(name, artist, cover, releaseDate);
+      INSERT INTO albums (spotify_id, name, artist, cover, release_date)
+      VALUES (?, ?, ?, ?, ?)
+    `).run(spotifyId, name, artist, cover, releaseDate);
+    console.log('DB addAlbum:', { name, artist, cover, releaseDate, spotifyId });
+
 
     return result.lastInsertRowid;
   },
+
 
   getAlbumByName(name) {
     return db.prepare(`SELECT * FROM albums WHERE name = ?`).get(name);
   },
 
-  getAllAlbums() {
+getAllAlbums() {
+  return db.prepare(`
+    SELECT
+      spotify_id,
+      name,
+      artist,
+      cover,
+      release_date
+    FROM albums
+    ORDER BY id DESC
+  `).all();
+},
+  // Get album info by spotify_id
+  getAlbumBySpotifyId(spotifyId) {
     return db.prepare(`
-      SELECT
-        album AS name,
-        artist,
-        MIN(release_date) AS release_date,
-        (
-          SELECT cover
-          FROM downloads AS d2
-          WHERE d2.album = d1.album AND d2.cover IS NOT NULL
-          LIMIT 1
-        ) AS cover
-      FROM downloads AS d1
-      WHERE album IS NOT NULL AND status = 'downloaded'
-      GROUP BY album, artist
-      ORDER BY MAX(downloaded_at) DESC
-    `).all();
+      SELECT * FROM albums WHERE spotify_id = ?
+    `).get(spotifyId);
   },
 
   getTracksByAlbum(albumName) {
@@ -144,6 +148,18 @@ module.exports = {
       ORDER BY downloaded_at ASC
     `).all(albumName);
   },
+
+  // Helper: get album by spotify_id and fetch tracks by album name
+  getAlbumAndTracksBySpotifyId(spotifyId) {
+    // Replace this.getAlbumBySpotifyId with db.getAlbumBySpotifyId
+    const album = module.exports.getAlbumBySpotifyId(spotifyId);
+    if (!album) return null;
+
+    const tracks = module.exports.getTracksByAlbum(album.name);
+    return { album, tracks };
+  },
+
+
   // === PLAYLISTS ===
   createPlaylist(name, cover = null) {
     return db.prepare('INSERT INTO playlists (name, cover) VALUES (?, ?)').run(name, cover);

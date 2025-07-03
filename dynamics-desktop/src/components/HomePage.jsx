@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { PlayerContext } from '../context/PlayerContext';
 import SearchBar from './SearchBar';
+import TrackRow from './TrackRow';
 
 const HomePage = () => {
   const [data, setData] = useState(null);
@@ -105,86 +106,6 @@ const HomePage = () => {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const TrackRow = ({ track, queue, showIndex = false, index = 0 }) => {
-    const isCurrentTrack = currentTrack?.id === track.id;
-    const isCurrentlyPlaying = isCurrentTrack && isPlaying;
-
-    return (
-      <div className={`flex items-center gap-4 p-4 rounded-xl hover:bg-white/70 dark:hover:bg-gray-800/70 transition-all group ${
-        isCurrentTrack ? 'bg-green-50/70 dark:bg-green-900/20' : 'bg-white/50 dark:bg-gray-900/50'
-      }`}>
-        {showIndex && (
-          <div className="w-8 text-center">
-            <span className={`text-sm font-medium ${
-              isCurrentTrack ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'
-            }`}>
-              {index + 1}
-            </span>
-          </div>
-        )}
-
-        <div className="relative">
-          <img
-            src={track.cover || '/default_cover.jpg'}
-            alt={`${track.title} cover`}
-            className="w-16 h-16 rounded-lg object-cover shadow-md"
-          />
-          {isCurrentlyPlaying && (
-            <div className="absolute inset-0 bg-green-500/20 rounded-lg flex items-center justify-center">
-              <div className="w-4 h-4 border-2 border-green-500 rounded-full animate-pulse"></div>
-            </div>
-          )}
-        </div>
-
-        <div className="flex-grow min-w-0">
-          <h3 className={`font-semibold truncate ${
-            isCurrentTrack ? 'text-green-600 dark:text-green-400' : 'text-gray-800 dark:text-white'
-          }`}>
-            {track.title}
-          </h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
-            {track.artist}
-          </p>
-          <p className="text-xs text-gray-400 dark:text-gray-500 truncate">
-            {track.album} • {formatDuration(track.duration)}
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => handlePlay(track, queue)}
-            className={`w-10 h-10 flex items-center justify-center rounded-full transition-all ${
-              isCurrentlyPlaying
-                ? 'bg-green-500 hover:bg-green-600 text-white'
-                : 'bg-indigo-500 hover:bg-indigo-600 text-white'
-            }`}
-            title={isCurrentlyPlaying ? 'Currently Playing' : 'Play Track'}
-          >
-            <Play size={16} fill="currentColor" />
-          </button>
-
-          {downloadingTrackId === track.id ? (
-            <div className="text-green-600 text-xs font-medium px-2 py-1 bg-green-100 dark:bg-green-900/30 rounded-full">
-              {progressText}
-            </div>
-          ) : downloadedTracks[track.id] ? (
-            <div className="text-green-600 flex items-center gap-1 px-2 py-1 bg-green-100 dark:bg-green-900/30 rounded-full">
-              <Heart size={14} fill="currentColor" />
-              <span className="text-xs font-medium">Downloaded</span>
-            </div>
-          ) : (
-            <button
-              onClick={() => handleDownload(track)}
-              className="flex items-center gap-1 px-3 py-1.5 text-xs bg-emerald-500 hover:bg-emerald-600 text-white rounded-full shadow-sm transition-all"
-              title="Download Track"
-            >
-              <Download size={14} />
-            </button>
-          )}
-        </div>
-      </div>
-    );
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-indigo-900">
@@ -239,6 +160,7 @@ const HomePage = () => {
                   showIndex={true}
                   index={index}
                 />
+
               ))}
             </div>
           </section>
@@ -260,10 +182,11 @@ const HomePage = () => {
                 <TrackRow
                   key={track.id}
                   track={track}
-                  queue={data.charts.tracks}
+                  queue={data.artistSpotlight.tracks}
                   showIndex={true}
                   index={index}
                 />
+
               ))}
             </div>
           </section>
@@ -317,7 +240,7 @@ const HomePage = () => {
                 <div
                   key={album.id}
                   className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm p-4 rounded-xl shadow-lg hover:shadow-xl transition-all cursor-pointer group"
-                  onClick={() => alert('Album details coming soon!')}
+                  onClick={() => navigate(`/album/${album.id}`)}
                 >
                   <div className="relative mb-4">
                     <img
@@ -353,10 +276,11 @@ const HomePage = () => {
                 <TrackRow
                   key={track.id}
                   track={track}
-                  queue={section.tracks}
-                  showIndex={false}
+                  queue={data.artistSpotlight.tracks}
+                  showIndex={true}
                   index={index}
                 />
+
               ))}
             </div>
           </section>

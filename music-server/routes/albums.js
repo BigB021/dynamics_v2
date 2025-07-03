@@ -2,7 +2,7 @@ const express = require('express');
 const path = require('path');
 const fs = require('fs');
 const { parseFile } = require('music-metadata');
-const { getAllAlbums, getTracksByAlbum, db } = require('../db/db');
+const { getAllAlbums, getAlbumAndTracksBySpotifyId, db } = require('../db/db');
 
 const router = express.Router();
 const mediaBaseUrl = 'http://localhost:3000/media/';
@@ -12,13 +12,12 @@ router.get('/', (req, res) => {
   try {
     const albums = getAllAlbums();
     const formatted = albums.map((album) => ({
-      id: album.id,
+      id: album.spotify_id,
       name: album.name,
       artist: album.artist,
       release_date: album.release_date,
       cover: album.cover ? mediaBaseUrl + encodeURIComponent(album.cover) : null,
     }));
-    
     res.json(formatted);
   } catch (err) {
     console.error('❌ Error fetching albums:', err);
@@ -26,21 +25,23 @@ router.get('/', (req, res) => {
   }
 });
 
-// GET /api/albums/:name — get all tracks of a specific album
-router.get('/:name', async (req, res) => {
-  const albumName = req.params.name;
+// GET /api/albums/:spotify_id — get album and tracks by spotify_id
+router.get('/:spotify_id', async (req, res) => {
+  const spotifyId = req.params.spotify_id;
 
   try {
-    const tracks = getTracksByAlbum(albumName);
+    const result = getAlbumAndTracksBySpotifyId(spotifyId);
+    if (!result) return res.status(404).json({ error: 'Album not found' });
 
-    // For each track, check duration, parse file if missing, update DB
+    const { album, tracks } = result;
+
+    // Enrich tracks with duration if missing
     const enrichedTracks = await Promise.all(tracks.map(async (track) => {
       if (track.duration === null || track.duration === undefined) {
         if (fs.existsSync(track.file_path)) {
           try {
             const metadata = await parseFile(track.file_path);
             const duration = Math.round(metadata.format.duration || 0);
-            // Update duration in DB
             db.prepare('UPDATE downloads SET duration = ? WHERE spotify_id = ?').run(duration, track.spotify_id);
             track.duration = duration;
           } catch (err) {
@@ -61,7 +62,17 @@ router.get('/:name', async (req, res) => {
       };
     }));
 
-    res.json(enrichedTracks);
+    res.json({
+      album: {
+        id: album.spotify_id,
+        name: album.name,
+        artist: album.artist,
+        release_date: album.release_date,
+        cover: album.cover ? mediaBaseUrl + encodeURIComponent(album.cover) : null,
+      },
+      tracks: enrichedTracks,
+    });
+    console.log("album id: "+album.id )
   } catch (err) {
     console.error('❌ Error fetching album tracks:', err);
     res.status(500).json({ error: 'Failed to fetch album tracks' });

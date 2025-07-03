@@ -28,7 +28,7 @@ function App() {
         <Route path="/playlists" element={<PlaylistPage />} />
         <Route path="/playlist/:id" element={<PlaylistDetail />} />
         <Route path="/albums" element={<DownloadedAlbums />} />
-        <Route path="/albums/:name" element={<AlbumPage />} />
+        <Route path="/albums/:spotify_id" element={<AlbumPage />} />
         <Route path="/favorites" element={<Favorites />} />
       </Routes>
 
