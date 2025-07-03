@@ -8,8 +8,7 @@ const downloadRoutes = require('./routes/download.js');
 const downloadedRoutes = require('./routes/downloaded.js')
 const playlistRoutes = require('./routes/playlists');
 const albumRoutes = require('./routes/albums');
-
-
+const favoriteRoutes = require('./routes/favorites');
 
 dotenv.config();
 const app = express();
@@ -28,9 +27,10 @@ app.use('/api/download', downloadRoutes);
 app.use('/api/downloaded', downloadedRoutes);
 app.use('/api/playlists', playlistRoutes);
 app.use('/api/albums', albumRoutes);
+app.use('/api/favorites', favoriteRoutes);
 
 
-app.use('/media', express.static(path.resolve(__dirname, 'media')));
+//app.use('/media', express.static(path.resolve(__dirname, 'media')));
 app.use('/media', express.static(mediaDir));
 
 app.listen(PORT, () => console.log(`🎵 Server running on http://localhost:${PORT}`));

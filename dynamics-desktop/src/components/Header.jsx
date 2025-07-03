@@ -6,7 +6,8 @@ import {
   Download,
   Home,
   Settings,
-  ListMusic
+  ListMusic,
+  Heart
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import logo from '../assets/logo.png';
@@ -46,6 +47,7 @@ const Header = ({ query, setQuery }) => {
         <NavIcon icon={<Download size={18} />} label="Downloads" onClick={() => navigate('/downloads')} />
         <NavIcon icon={<List size={18} />} label="Playlists" onClick={() => navigate('/playlists')} />
         <NavIcon icon={<ListMusic size={18} />} label="Albums" onClick={() => navigate('/albums')} />
+        <NavIcon icon={<Heart size={18} />} label="Favorites" onClick={() => navigate('/favorites')} />
 
         <div className="flex items-center gap-2 border-l pl-4 border-zinc-300 dark:border-zinc-600 ml-2">
           <IconButton

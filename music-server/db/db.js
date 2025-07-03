@@ -53,6 +53,15 @@ db.prepare(`
   )
 `).run();
 
+// Favorites table
+db.prepare(`
+  CREATE TABLE IF NOT EXISTS favorites (
+    spotify_id TEXT PRIMARY KEY,
+    added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (spotify_id) REFERENCES downloads(spotify_id)
+  )
+`).run();
+
 module.exports = {
   db,
 
@@ -161,5 +170,30 @@ module.exports = {
       DELETE FROM playlist_tracks 
       WHERE playlist_id = ? AND spotify_id = ?
     `).run(playlistId, spotifyId);
+  },
+  // === FAVORITES ===
+  addFavorite(spotifyId) {
+    return db.prepare('INSERT OR IGNORE INTO favorites (spotify_id) VALUES (?)').run(spotifyId);
+  },
+
+  removeFavorite(spotifyId) {
+    return db.prepare('DELETE FROM favorites WHERE spotify_id = ?').run(spotifyId);
+  },
+
+  isFavorite(spotifyId) {
+    return db.prepare('SELECT 1 FROM favorites WHERE spotify_id = ?').get(spotifyId);
+  },
+
+  getAllFavorites() {
+    return db.prepare(`
+      SELECT 
+        d.*,
+        f.added_at as favorited_at
+      FROM favorites f
+      JOIN downloads d ON d.spotify_id = f.spotify_id
+      WHERE d.status = 'downloaded'
+      ORDER BY f.added_at DESC
+    `).all();
   }
+
 };
