@@ -9,6 +9,7 @@ import PlaylistDetail from './components/PlaylistDetail';
 import DownloadedAlbums from './components/DownloadedAlbums';
 import AlbumPage from './components/AlbumPage';
 import Favorites from './components/Favorites';
+import HomePage from './components/HomePage';
 
 function App() {
   const [query, setQuery] = useState('');
@@ -20,7 +21,8 @@ function App() {
       <Routes>
         <Route
           path="/"
-          element={<SearchBar query={query} setQuery={setQuery} />}
+          // element={<SearchBar query={query} setQuery={setQuery} />}
+          element={<HomePage />}
         />
         <Route path="/downloads" element={<DownloadedTracks />} />
         <Route path="/playlists" element={<PlaylistPage />} />

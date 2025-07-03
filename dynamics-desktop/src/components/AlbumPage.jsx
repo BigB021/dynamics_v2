@@ -2,6 +2,7 @@ import React, { useEffect, useState, useContext } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { PlayerContext } from '../context/PlayerContext';
 import { ArrowLeft, Play, Music, Clock, User, Hash } from 'lucide-react';
+import TrackList from '../components/TrackList';
 
 const AlbumPage = () => {
   const { name } = useParams();
@@ -9,7 +10,7 @@ const AlbumPage = () => {
   const [albumInfo, setAlbumInfo] = useState(null);
   const navigate = useNavigate();
 
-  const { setCurrentTrack, setQueue, currentTrack } = useContext(PlayerContext);
+  const { playTrack, setQueue, currentTrack } = useContext(PlayerContext);
 
   useEffect(() => {
     fetch(`http://localhost:3000/api/albums/${encodeURIComponent(name)}`)
@@ -34,21 +35,14 @@ const AlbumPage = () => {
 
   const handlePlay = (track) => {
     setQueue(tracks);
-    setCurrentTrack(track);
+    playTrack(track, tracks);
   };
 
   const handlePlayAll = () => {
     if (tracks.length > 0) {
       setQueue(tracks);
-      setCurrentTrack(tracks[0]);
+      playTrack(tracks[0], tracks);
     }
-  };
-
-  const formatDuration = (seconds) => {
-    if (!seconds) return '0:00';
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
   return (
@@ -116,79 +110,7 @@ const AlbumPage = () => {
 
       <div className="px-6 py-8 md:px-12 mb-20">
         {tracks.length > 0 ? (
-          <div className="bg-white/60 backdrop-blur-sm rounded-3xl shadow-xl border border-white/20 dark:bg-gray-900/70 dark:border-gray-700 overflow-hidden">
-            <div className="bg-gradient-to-r from-slate-100/80 to-indigo-50/80 dark:from-gray-800/80 dark:to-indigo-900/80 px-6 py-4 border-b border-slate-200/50 dark:border-gray-700">
-              <div className="grid grid-cols-12 gap-4 text-sm font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
-                <div className="col-span-1 text-center">#</div>
-                <div className="col-span-6">Song</div>
-                <div className="col-span-4">Artist</div>
-                <div className="col-span-1 flex justify-center">
-                  <Clock size={16} />
-                </div>
-              </div>
-            </div>
-
-            <div className="divide-y divide-slate-200/30 dark:divide-gray-700">
-              {tracks.map((track, index) => (
-                <div
-                  key={track.spotify_id || index}
-                  onClick={() => handlePlay(track)}
-                  className={`group grid grid-cols-12 gap-4 px-6 py-4 cursor-pointer transition-all duration-300 hover:bg-indigo-50/50 dark:hover:bg-indigo-900/50 ${
-                    currentTrack?.spotify_id === track.spotify_id
-                      ? 'bg-gradient-to-r from-indigo-100/60 to-purple-100/60 dark:from-indigo-800/70 dark:to-purple-800/70'
-                      : ''
-                  }`}
-                >
-                  <div className="col-span-1 flex items-center justify-center">
-                    <span className={`text-sm font-bold group-hover:hidden ${
-                      currentTrack?.spotify_id === track.spotify_id ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500 dark:text-slate-400'
-                    }`}>
-                      {String(index + 1).padStart(2, '0')}
-                    </span>
-                    <div className="hidden group-hover:flex items-center justify-center w-8 h-8 bg-indigo-500 rounded-full">
-                      <Play size={12} className="text-white fill-white ml-0.5" />
-                    </div>
-                  </div>
-
-                  <div className="col-span-6 flex items-center gap-4 min-w-0">
-                    {track.cover ? (
-                      <img
-                        src={track.cover}
-                        alt={track.title}
-                        className="w-14 h-14 object-cover rounded-xl shadow-md flex-shrink-0 border-2 border-white/50 dark:border-gray-700"
-                      />
-                    ) : (
-                      <div className="w-14 h-14 bg-gradient-to-br from-slate-200 to-slate-300 dark:from-gray-700 dark:to-gray-800 rounded-xl flex items-center justify-center flex-shrink-0 border-2 border-white/50 dark:border-gray-700">
-                        <Music size={16} className="text-slate-500 dark:text-slate-400" />
-                      </div>
-                    )}
-                    <div className="min-w-0 flex-grow">
-                      <div className={`font-bold text-lg truncate ${
-                        currentTrack?.spotify_id === track.spotify_id ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-800 dark:text-slate-200'
-                      }`}>
-                        {track.title}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="col-span-4 flex items-center">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-8 h-8 bg-gradient-to-br from-slate-300 to-slate-400 dark:from-gray-700 dark:to-gray-800 rounded-full flex items-center justify-center flex-shrink-0">
-                        <User size={14} className="text-slate-600 dark:text-slate-400" />
-                      </div>
-                      <span className="text-slate-600 dark:text-slate-400 font-medium truncate">{track.artist}</span>
-                    </div>
-                  </div>
-
-                  <div className="col-span-1 flex items-center justify-center">
-                    <span className="text-sm font-mono text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-gray-800 px-2 py-1 rounded-lg">
-                      {formatDuration(track.duration)}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          <TrackList tracks={tracks} onPlay={handlePlay} title="Tracks" />
         ) : (
           <div className="text-center py-20 bg-white/40 backdrop-blur-sm rounded-3xl border border-white/20 dark:bg-gray-900/60 dark:border-gray-700">
             <div className="w-20 h-20 bg-gradient-to-br from-slate-200 to-slate-300 dark:from-gray-700 dark:to-gray-800 rounded-full flex items-center justify-center mx-auto mb-6">
