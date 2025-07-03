@@ -240,7 +240,10 @@ const HomePage = () => {
                 <div
                   key={album.id}
                   className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm p-4 rounded-xl shadow-lg hover:shadow-xl transition-all cursor-pointer group"
-                  onClick={() => navigate(`/album/${album.id}`)}
+                  onClick={() => navigate(`/album/${album.id}`)}  // use album.spotify_id if needed
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={e => { if (e.key === 'Enter') navigate(`/album/${album.id}`); }}
                 >
                   <div className="relative mb-4">
                     <img
@@ -259,6 +262,7 @@ const HomePage = () => {
             </div>
           </section>
         )}
+
 
         {/* Genre Sections */}
         {data.genreSections?.length > 0 && data.genreSections.map((section, sectionIndex) => (
