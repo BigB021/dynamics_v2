@@ -54,7 +54,7 @@ const AlbumPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-zinc-900 dark:via-zinc-800 dark:to-indigo-900 text-slate-800 dark:text-slate-200 font-sans">
       <div className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-indigo-600/10 to-purple-600/10 dark:from-indigo-900/30 dark:to-purple-900/30"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-indigo-600/10 to-purple-600/10 dark:from-indigo-900/30 dark:to-purple-900/30 "></div>
         <div className="relative px-6 py-8 md:px-12">
           <button
             onClick={() => navigate(-1)}
@@ -114,7 +114,7 @@ const AlbumPage = () => {
         </div>
       </div>
 
-      <div className="px-6 py-8 md:px-12">
+      <div className="px-6 py-8 md:px-12 mb-20">
         {tracks.length > 0 ? (
           <div className="bg-white/60 backdrop-blur-sm rounded-3xl shadow-xl border border-white/20 dark:bg-gray-900/70 dark:border-gray-700 overflow-hidden">
             <div className="bg-gradient-to-r from-slate-100/80 to-indigo-50/80 dark:from-gray-800/80 dark:to-indigo-900/80 px-6 py-4 border-b border-slate-200/50 dark:border-gray-700">
