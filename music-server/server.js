@@ -9,6 +9,8 @@ const downloadedRoutes = require('./routes/downloaded.js')
 const playlistRoutes = require('./routes/playlists');
 const albumRoutes = require('./routes/albums');
 const favoriteRoutes = require('./routes/favorites');
+const homeRoute = require('./routes/home');
+
 
 dotenv.config();
 const app = express();
@@ -28,6 +30,8 @@ app.use('/api/downloaded', downloadedRoutes);
 app.use('/api/playlists', playlistRoutes);
 app.use('/api/albums', albumRoutes);
 app.use('/api/favorites', favoriteRoutes);
+app.use('/api/home', homeRoute);
+
 
 
 //app.use('/media', express.static(path.resolve(__dirname, 'media')));
