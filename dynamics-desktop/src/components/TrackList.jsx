@@ -12,6 +12,14 @@ const TrackListItem = ({ track, onDelete, onPlay, index }) => {
   const { setCurrentTrack, setQueue, currentTrack, setShouldAutoPlay, playTrack, isPlaying } = useContext(PlayerContext);
 
   useEffect(() => {
+    fetch(`http://localhost:3000/api/favorites/${track.spotify_id}`)
+      .then(res => res.json())
+      .then(data => setIsLiked(data.isFavorite))
+      .catch(() => setIsLiked(false));
+  }, [track.spotify_id]);
+
+
+  useEffect(() => {
     const handleClickOutside = (event) => {
       if (menuRef.current && !menuRef.current.contains(event.target)) {
         setMenuOpen(false);
@@ -61,8 +69,46 @@ const TrackListItem = ({ track, onDelete, onPlay, index }) => {
 
   const handleLikeToggle = (e) => {
     e.stopPropagation();
-    setIsLiked(!isLiked);
+    
+    if (isLiked) {
+      // Remove favorite
+      fetch(`http://localhost:3000/api/favorites/${track.spotify_id}`, {
+        method: 'DELETE',
+      })
+        .then(res => {
+          if (!res.ok) throw new Error('Failed to remove favorite');
+          setIsLiked(false);
+        })
+        .catch(err => {
+          alert('Error removing from favorites');
+          console.error(err);
+        });
+    } else {
+      // Add favorite
+      fetch(`http://localhost:3000/api/favorites`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ spotifyId: track.spotify_id }),
+      })
+        .then(res => {
+          if (!res.ok) throw new Error('Failed to add favorite');
+          setIsLiked(true);
+        })
+        .catch(err => {
+          alert('Error adding to favorites');
+          console.error(err);
+        });
+    }
   };
+
+
+  const formatDuration = (seconds) => {
+    if (!seconds || isNaN(seconds)) return '--:--';
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
 
   const isCurrentTrack = currentTrack?.spotify_id === track.spotify_id;
   const showPlayIcon = isCurrentTrack && isPlaying;
@@ -127,7 +173,7 @@ const TrackListItem = ({ track, onDelete, onPlay, index }) => {
       {/* Desktop: Duration (Hidden on mobile) */}
       <div className="hidden md:block flex-shrink-0 w-16 text-right">
         <div className="text-sm text-gray-500 dark:text-gray-400">
-          {track.duration || '3:45'}
+          {formatDuration(track.duration)}
         </div>
       </div>
 

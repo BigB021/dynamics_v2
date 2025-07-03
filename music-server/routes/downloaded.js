@@ -17,9 +17,12 @@ router.get('/', (req, res) => {
       spotify_id:track.spotify_id,
       filename: path.basename(track.file_path),
       url: mediaBaseUrl + encodeURIComponent(path.basename(track.file_path)),
-      artist: track.artist || 'Unknown Artist',
-      title: track.title || 'Unknown Title',
-      cover: track.cover ? mediaBaseUrl + encodeURIComponent(track.cover) : '/default_cover.jpeg'
+      artist: track.artist ,
+      title: track.title ,
+      cover: track.cover ? mediaBaseUrl + encodeURIComponent(track.cover) : '/default_cover.jpeg',
+      duration: track.duration 
+      
+
     }));
 
     res.json(tracks);
