@@ -35,6 +35,7 @@ router.get('/', async (req, res) => {
       url: t.external_urls.spotify,
       album: t.album.name,
       cover: t.album.images?.[0]?.url || null,
+      explicit: t.explicit, 
     })) || [];
 
     const albumResults = data.albums?.items.map((a) => ({

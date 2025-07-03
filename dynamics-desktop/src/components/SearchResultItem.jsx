@@ -95,7 +95,14 @@ const SearchResultItem = ({ track, onPlay }) => {
       />
 
       <div className="flex-grow min-w-0">
-        <h3 className="font-semibold text-zinc-800 dark:text-white truncate">{track.name}</h3>
+<h3 className="font-semibold text-zinc-800 dark:text-white truncate flex items-center gap-2">
+  {track.name}
+  {track.explicit && (
+    <span className="text-xs font-semibold bg-zinc-800 text-white px-1.5 py-0.5 rounded">
+      E
+    </span>
+  )}
+</h3>
         <p className="text-sm text-zinc-500 dark:text-zinc-400 truncate">
           {track.artist} <span className="italic text-xs ml-1">({track.album || 'Unknown Album'})</span>
         </p>
