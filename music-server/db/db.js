@@ -1,5 +1,7 @@
 const Database = require('better-sqlite3');
 const path = require('path');
+const fs = require("fs");
+
 
 const db = new Database(path.resolve(__dirname, 'downloads.db'));
 
@@ -122,18 +124,19 @@ module.exports = {
     return db.prepare(`SELECT * FROM albums WHERE name = ?`).get(name);
   },
 
-getAllAlbums() {
-  return db.prepare(`
-    SELECT
-      spotify_id,
-      name,
-      artist,
-      cover,
-      release_date
-    FROM albums
-    ORDER BY id DESC
-  `).all();
-},
+  getAllAlbums() {
+    return db.prepare(`
+      SELECT
+        spotify_id,
+        name,
+        artist,
+        cover,
+        release_date
+      FROM albums
+      ORDER BY id DESC
+    `).all();
+  },
+
   // Get album info by spotify_id
   getAlbumBySpotifyId(spotifyId) {
     return db.prepare(`
@@ -148,6 +151,51 @@ getAllAlbums() {
       ORDER BY downloaded_at ASC
     `).all(albumName);
   },
+
+  deleteAlbumBySpotifyId(spotifyId) {
+    const album = module.exports.getAlbumBySpotifyId(spotifyId);
+    if (!album) return;
+
+    // Delete all tracks associated with this album
+    const tracks = module.exports.getTracksByAlbum(album.name);
+
+    const deleteTrack = db.prepare(`DELETE FROM downloads WHERE spotify_id = ?`);
+    const deleteFavorite = db.prepare(`DELETE FROM favorites WHERE spotify_id = ?`);
+    const deleteFromPlaylists = db.prepare(`DELETE FROM playlist_tracks WHERE spotify_id = ?`);
+
+    for (const track of tracks) {
+      // Remove .mp3 file
+      if (track.file_path && fs.existsSync(track.file_path)) {
+        try {
+          fs.unlinkSync(track.file_path);
+          console.log(`Deleted file: ${track.file_path}`);
+        } catch (err) {
+          console.warn(`Failed to delete file ${track.file_path}:`, err);
+        }
+      }
+
+      deleteFavorite.run(track.spotify_id);
+      deleteFromPlaylists.run(track.spotify_id);
+      deleteTrack.run(track.spotify_id);
+    }
+
+    // Delete album cover file if exists
+    if (album.cover) {
+      const coverPath = path.resolve(__dirname, "../media", album.cover);
+      if (fs.existsSync(coverPath)) {
+        try {
+          fs.unlinkSync(coverPath);
+          console.log(`Deleted cover: ${coverPath}`);
+        } catch (err) {
+          console.warn(`Failed to delete cover ${coverPath}:`, err);
+        }
+      }
+    }
+
+    // Finally, delete album record
+    return db.prepare(`DELETE FROM albums WHERE spotify_id = ?`).run(spotifyId);
+  },
+
 
   // Helper: get album by spotify_id and fetch tracks by album name
   getAlbumAndTracksBySpotifyId(spotifyId) {

@@ -2,7 +2,7 @@ const express = require('express');
 const path = require('path');
 const fs = require('fs');
 const { parseFile } = require('music-metadata');
-const { getAllAlbums, getAlbumAndTracksBySpotifyId, db } = require('../db/db');
+const { getAllAlbums, getAlbumAndTracksBySpotifyId, deleteAlbumBySpotifyId, db } = require('../db/db');
 
 const router = express.Router();
 const mediaBaseUrl = 'http://localhost:3000/media/';
@@ -78,5 +78,20 @@ router.get('/:spotify_id', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch album tracks' });
   }
 });
+
+
+// DELETE /api/albums/:spotify_id
+router.delete('/:spotify_id', (req, res) => {
+  const spotifyId = req.params.spotify_id;
+
+  try {
+    deleteAlbumBySpotifyId(spotifyId);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('❌ Error deleting album:', err);
+    res.status(500).json({ error: 'Failed to delete album' });
+  }
+});
+
 
 module.exports = router;

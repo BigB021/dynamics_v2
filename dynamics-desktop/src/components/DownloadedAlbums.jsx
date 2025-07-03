@@ -7,29 +7,34 @@ const DownloadedAlbums = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    fetchAlbums();
+  }, []);
+
+  const fetchAlbums = () => {
     fetch('http://localhost:3000/api/albums')
       .then((res) => res.json())
       .then((data) => {
-        console.log('Downloaded albums:', data); 
-        setAlbums(data)
-    })
+        console.log('Downloaded albums:', data);
+        setAlbums(data);
+      })
       .catch(console.error);
-  }, []);
-  useEffect(() => {
-  fetch('http://localhost:3000/api/albums')
-    .then((res) => res.json())
-    .then((data) => {
-      console.log('Downloaded albumsss:', data.map(a => ({
-        name: a.name,
-        artist: a.artist,
-        id: a.id,
-        idLooksLikeSpotify: /^[a-zA-Z0-9]{22}$/.test(a.id)
-      })));
-      setAlbums(data);
-    })
-    .catch(console.error);
-}, []);
+  };
 
+  const handleDelete = (albumId, albumName) => {
+    if (!window.confirm(`Are you sure you want to delete the album "${albumName}"?`)) return;
+
+    fetch(`http://localhost:3000/api/albums/${albumId}`, {
+      method: 'DELETE',
+    })
+      .then((res) => res.json())
+      .then(() => {
+        // Remove album from UI
+        setAlbums((prev) => prev.filter((album) => album.id !== albumId));
+      })
+      .catch((err) => {
+        console.error('Error deleting album:', err);
+      });
+  };
 
   return (
     <div className="px-6 py-8">
@@ -46,27 +51,45 @@ const DownloadedAlbums = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {albums.map((album) => (
             <div
-              key={`${album.name}-${album.artist}`}
-              onClick={() => navigate(`/albums/${encodeURIComponent(album.id)}`)}
-              className="cursor-pointer bg-white dark:bg-zinc-900 rounded-xl shadow hover:shadow-lg transition-all group"
+              key={`${album.id}`}
+              className="relative group bg-white dark:bg-zinc-900 rounded-xl shadow hover:shadow-lg transition-all"
             >
-              <div className="relative w-full h-48 overflow-hidden rounded-t-xl">
-                <img
-                  src={`${album.cover}`}
-                  alt={`${album.name} cover`}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                />
+              {/* Album cover and info */}
+              <div
+                onClick={() => navigate(`/albums/${encodeURIComponent(album.id)}`)}
+                className="cursor-pointer"
+              >
+                <div className="relative w-full h-48 overflow-hidden rounded-t-xl">
+                  <img
+                    src={album.cover}
+                    alt={`${album.name} cover`}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                </div>
+
+                <div className="p-4">
+                  <h3 className="text-lg font-semibold text-zinc-800 dark:text-white truncate">
+                    {album.name}
+                  </h3>
+                  <p className="text-sm text-zinc-500 dark:text-zinc-400 truncate">{album.artist}</p>
+                  {album.release_date && (
+                    <p className="text-xs text-zinc-400 dark:text-zinc-500 truncate">
+                      Released: {album.release_date}
+                    </p>
+                  )}
+                </div>
               </div>
 
-              <div className="p-4">
-                <h3 className="text-lg font-semibold text-zinc-800 dark:text-white truncate">{album.name}</h3>
-                <p className="text-sm text-zinc-500 dark:text-zinc-400 truncate">{album.artist}</p>
-                {album.release_date && (
-                  <p className="text-xs text-zinc-400 dark:text-zinc-500 truncate">
-                    Released: {album.release_date}
-                  </p>
-                )}
-              </div>
+              {/* Delete Button */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDelete(album.id, album.name);
+                }}
+                className="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white text-xs px-3 py-1 rounded-full shadow transition-all"
+              >
+                Delete
+              </button>
             </div>
           ))}
         </div>
