@@ -5,7 +5,7 @@ import { ArrowLeft, Play, Music, Clock, User, Hash } from 'lucide-react';
 import TrackList from '../components/TrackList';
 
 const AlbumPage = () => {
-  const { name } = useParams();
+  const { spotify_id } = useParams(); // id = spotify album id now
   const [tracks, setTracks] = useState([]);
   const [albumInfo, setAlbumInfo] = useState(null);
   const navigate = useNavigate();
@@ -13,25 +13,20 @@ const AlbumPage = () => {
   const { playTrack, setQueue, currentTrack } = useContext(PlayerContext);
 
   useEffect(() => {
-    fetch(`http://localhost:3000/api/albums/${encodeURIComponent(name)}`)
+    fetch(`http://localhost:3000/api/albums/${encodeURIComponent(spotify_id)}`)
       .then(res => res.json())
       .then(data => {
-        const enriched = data.map(track => ({
-          ...track,
-          cover: track.cover || null,
-        }));
-        setTracks(enriched);
-        if (enriched.length > 0) {
-          setAlbumInfo({
-            name: enriched[0].album,
-            artist: enriched[0].artist,
-            release_date: enriched[0].release_date,
-            cover: enriched[0].cover,
-          });
+        if (data.error) {
+          console.error(data.error);
+          setAlbumInfo(null);
+          setTracks([]);
+          return;
         }
+        setAlbumInfo(data.album);
+        setTracks(data.tracks || []);
       })
       .catch(console.error);
-  }, [name]);
+  }, [spotify_id]);
 
   const handlePlay = (track) => {
     setQueue(tracks);

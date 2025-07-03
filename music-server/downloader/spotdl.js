@@ -6,7 +6,7 @@ const fs = require('fs');
 const glob = require('glob');
 const mm = require('music-metadata');
 const { v4: uuidv4 } = require('uuid');
-const { getDownloadBySpotifyId, addDownload, db } = require('../db/db');
+const { addDownload, addAlbum } = require('../db/db');
 
 dotenv.config();
 
@@ -41,7 +41,7 @@ async function extractCover(mp3FilePath, outputDir) {
   return null;
 }
 
-function downloadWithSpotDL(url, taskId) {
+async function downloadWithSpotDL(url, taskId) {
   return new Promise((resolve, reject) => {
     const entity = extractSpotifyEntity(url);
     if (!entity) {
@@ -89,28 +89,46 @@ function downloadWithSpotDL(url, taskId) {
         return reject(new Error('No MP3s downloaded'));
       }
 
-      for (const file of recent) {
-        try {
-          const meta = await mm.parseFile(file);
-          const artist = sanitizeFileName(meta.common.artist || 'Unknown');
-          const title = sanitizeFileName(meta.common.title || 'Unknown');
-          const album = sanitizeFileName(meta.common.album || '');
-          const duration = meta.format.duration ? Math.round(meta.format.duration) : null;
-          const release = meta.common.date || null;
+      try {
+        // Extract album info from first track metadata
+        const firstMeta = await mm.parseFile(recent[0]);
+        const albumName = sanitizeFileName(firstMeta.common.album || '');
+        const artistName = sanitizeFileName(firstMeta.common.artist || 'Unknown');
+        const releaseDate = firstMeta.common.date || null;
 
-          const coverPath = await extractCover(file, downloadDir);
-          const coverFileName = coverPath ? path.basename(coverPath) : null;
+        // Extract cover once here
+        const coverPath = await extractCover(recent[0], downloadDir);
+        const coverFileName = coverPath ? path.basename(coverPath) : null;
 
-          const spotifyId = uuidv4();
+        // Insert album record with Spotify album ID (if url is album)
+        const albumSpotifyId = entity.type === 'album' ? entity.id : null;
+        console.log('Adding album:', { albumName, artistName, coverFileName, releaseDate, albumSpotifyId });
+        await addAlbum(albumName, artistName, coverFileName, releaseDate, albumSpotifyId);
 
-          addDownload(spotifyId, file, 'downloaded', artist, title, album, duration, release, coverFileName);
-        } catch (err) {
-          console.error(`Error processing file ${file}:`, err);
+        // Insert all tracks
+        for (const file of recent) {
+          try {
+            const meta = await mm.parseFile(file);
+            const artist = sanitizeFileName(meta.common.artist || 'Unknown');
+            const title = sanitizeFileName(meta.common.title || 'Unknown');
+            const album = sanitizeFileName(meta.common.album || '');
+            const duration = meta.format.duration ? Math.round(meta.format.duration) : null;
+            const release = meta.common.date || null;
+
+            const spotifyTrackId = uuidv4(); // Or get real Spotify track ID if possible
+
+            addDownload(spotifyTrackId, file, 'downloaded', artist, title, album, duration, release, coverFileName);
+          } catch (err) {
+            console.error(`Error processing file ${file}:`, err);
+          }
         }
-      }
 
-      downloads[taskId] = { state: 'finished', message: 'Album/tracks downloaded' };
-      return resolve('Album/tracks downloaded');
+        downloads[taskId] = { state: 'finished', message: 'Album/tracks downloaded' };
+        return resolve('Album/tracks downloaded');
+      } catch (err) {
+        downloads[taskId] = { state: 'error', message: 'Failed to process downloaded files' };
+        return reject(err);
+      }
     });
   });
 }

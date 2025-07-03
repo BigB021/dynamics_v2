@@ -9,9 +9,27 @@ const DownloadedAlbums = () => {
   useEffect(() => {
     fetch('http://localhost:3000/api/albums')
       .then((res) => res.json())
-      .then((data) => setAlbums(data))
+      .then((data) => {
+        console.log('Downloaded albums:', data); 
+        setAlbums(data)
+    })
       .catch(console.error);
   }, []);
+  useEffect(() => {
+  fetch('http://localhost:3000/api/albums')
+    .then((res) => res.json())
+    .then((data) => {
+      console.log('Downloaded albumsss:', data.map(a => ({
+        name: a.name,
+        artist: a.artist,
+        id: a.id,
+        idLooksLikeSpotify: /^[a-zA-Z0-9]{22}$/.test(a.id)
+      })));
+      setAlbums(data);
+    })
+    .catch(console.error);
+}, []);
+
 
   return (
     <div className="px-6 py-8">
@@ -29,7 +47,7 @@ const DownloadedAlbums = () => {
           {albums.map((album) => (
             <div
               key={`${album.name}-${album.artist}`}
-              onClick={() => navigate(`/albums/${encodeURIComponent(album.name)}`)}
+              onClick={() => navigate(`/albums/${encodeURIComponent(album.id)}`)}
               className="cursor-pointer bg-white dark:bg-zinc-900 rounded-xl shadow hover:shadow-lg transition-all group"
             >
               <div className="relative w-full h-48 overflow-hidden rounded-t-xl">
