@@ -225,9 +225,9 @@ export default function Favorites() {
 
                     {/* Album Art */}
                     <div className="w-14 h-14 ml-2 mr-4">
-                      {track.album_art ? (
+                      {track.cover ? (
                         <img
-                          src={track.album_art}
+                          src={track.cover}
                           alt={track.title}
                           className="w-full h-full object-cover rounded-lg shadow-sm"
                         />
