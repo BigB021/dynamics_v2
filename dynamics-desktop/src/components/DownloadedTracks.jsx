@@ -98,8 +98,8 @@ const DownloadedTracks = () => {
           </p>
         </div>
       ) : (
-        <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden">
-          <div className="p-6">
+        <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden mb-20">
+          <div className="p-6 mb-5">
             <TrackList
               tracks={tracks}
               title={`Downloaded Songs`}

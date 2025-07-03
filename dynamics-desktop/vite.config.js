@@ -16,6 +16,13 @@ export default defineConfig({
   },
   server: {
     open: true, // open browser on dev server start
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3000', // your Express backend
+        changeOrigin: true,
+        secure: false,
+      },
+    },
   },
   resolve: {
     alias: {

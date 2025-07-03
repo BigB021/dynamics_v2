@@ -8,6 +8,7 @@ import PlaylistPage from './components/PlaylistPage';
 import PlaylistDetail from './components/PlaylistDetail';
 import DownloadedAlbums from './components/DownloadedAlbums';
 import AlbumPage from './components/AlbumPage';
+import Favorites from './components/Favorites';
 
 function App() {
   const [query, setQuery] = useState('');
@@ -26,6 +27,7 @@ function App() {
         <Route path="/playlist/:id" element={<PlaylistDetail />} />
         <Route path="/albums" element={<DownloadedAlbums />} />
         <Route path="/albums/:name" element={<AlbumPage />} />
+        <Route path="/favorites" element={<Favorites />} />
       </Routes>
 
       <GlobalMusicPlayer />

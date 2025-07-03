@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, useContext, useCallback } from 'react';
 import { PlayerContext } from '../context/PlayerContext';
+import { toggleFavorite, isTrackFavorite } from '../utils/favoritesAPI';
 import {
   Play,
   Pause,
@@ -51,7 +52,7 @@ const GlobalMusicPlayer = ({ theme = 'dark' }) => {
   // Fixed track loading effect with auto-play support
   useEffect(() => {
     const audio = audioRef.current;
-    if (!audio || !currentTrack) return;
+    if (!audio || !currentTrack ) return;
 
     const currentTrackId = getTrackId(currentTrack);
     
@@ -119,6 +120,11 @@ const GlobalMusicPlayer = ({ theme = 'dark' }) => {
     };
   }, [currentTrack, getTrackId, loadedTrackId, isPlaying, shouldAutoPlay, setShouldAutoPlay]);
 
+  useEffect(() => {
+      if (currentTrack) {
+        isTrackFavorite(currentTrack.spotify_id).then(setIsLiked);
+      }
+    }, [currentTrack]);
   // Audio event listeners
   useEffect(() => {
     const audio = audioRef.current;
@@ -241,9 +247,20 @@ const GlobalMusicPlayer = ({ theme = 'dark' }) => {
               <div className="text-white font-semibold text-sm truncate">{currentTrack.title}</div>
               <div className="text-zinc-400 text-xs truncate">{currentTrack.artist}</div>
             </div>
-            <button onClick={() => setIsLiked(!isLiked)} className="ml-2 text-pink-500 hover:text-pink-600">
-              <Heart className={`w-5 h-5 ${isLiked ? 'fill-current' : ''}`} />
+            <button
+              onClick={async () => {
+                const success = await toggleFavorite(currentTrack.spotify_id, isLiked);
+                if (success) setIsLiked(!isLiked);
+              }}
+              className="ml-2 text-pink-500 hover:text-pink-600"
+            >
+              <Heart
+                className="w-5 h-5"
+                strokeWidth={isLiked ? 0 : 2}
+                fill={isLiked ? 'currentColor' : 'none'}
+              />
             </button>
+            
           </div>
 
           <div className="flex flex-col items-center w-1/3">
