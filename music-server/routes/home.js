@@ -1,25 +1,21 @@
 const express = require('express');
 const fetch = require('node-fetch');
 const { getSpotifyAccessToken } = require('../spotify/tokenManager');
+const { getSmartFeaturedArtists, MUSIC_GENRES, MARKETS } = require('../constants/fetchData');
 
 const router = express.Router();
 
-const FEATURED_ARTISTS = [
-  '1Xyo4u8uXC1ZmMpatF05PJ', '06HL4z0CvFAxyc27GXpf02', '4dpARuHxo51G3z768sgnrY',
-  '1dfeR4HaWDbWqFHLkxsg1d', '3TVXtAsR1Inumwj472S9r4', '66CXWjxzNUsdJxJ2JdwvnR',
-  '4q3ewBCX7sLwd24euuV69X', '1McMsnEElThX1knmY4oliG', '5pKCCKE2ajJHZ9KAiaK11H',
-  '0du5cEVh5yTK9QJze8zA0C', '7dGJo4pcD2V6oG8kP0tJRR', '1HY2Jd0NmPuamShAr6KMms',
-  '7CajNmpbOovFoOoasH2HaY', '4gzpq5DPGxSnKTe4SA8HAU', '7Ln80lUS6He07XvHI8qqHH',
-];
+// Move inside route handler instead of top-level await
+let FEATURED_ARTISTS = [];
 
-const MUSIC_GENRES = [
-  'pop', 'hip-hop', 'rock', 'electronic', 'jazz', 'blues', 'country', 'r-n-b',
-  'latin', 'reggae', 'folk', 'indie', 'alternative', 'classical', 'funk',
-  'soul', 'punk', 'metal', 'ambient', 'house', 'techno', 'dubstep'
-];
-
-// Use more reliable markets - some smaller markets might not have all content
-const MARKETS = ['US', 'GB', 'CA', 'AU', 'DE', 'FR'];
+(async () => {
+  try {
+    FEATURED_ARTISTS = await getSmartFeaturedArtists();
+    console.log(`🎯 Loaded ${FEATURED_ARTISTS.length} smart featured artists`);
+  } catch (err) {
+    console.error('❌ Failed to load smart featured artists:', err);
+  }
+})();
 
 const safeFetchJSON = async (url, headers) => {
   try {
