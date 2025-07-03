@@ -1,17 +1,8 @@
 import React, { useEffect, useState, useContext, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Play, 
-  Download, 
-  Shuffle, 
-  TrendingUp, 
-  Star, 
-  Globe, 
-  Music, 
-  Headphones,
-  RefreshCw,
-  Clock,
-  Heart
+import {
+  Play, Download, Shuffle, TrendingUp, Star, Globe,
+  Music, Headphones, RefreshCw, Clock, Heart
 } from 'lucide-react';
 import { PlayerContext } from '../context/PlayerContext';
 import SearchBar from './SearchBar';
@@ -117,7 +108,7 @@ const HomePage = () => {
   const TrackRow = ({ track, queue, showIndex = false, index = 0 }) => {
     const isCurrentTrack = currentTrack?.id === track.id;
     const isCurrentlyPlaying = isCurrentTrack && isPlaying;
-    
+
     return (
       <div className={`flex items-center gap-4 p-4 rounded-xl hover:bg-white/70 dark:hover:bg-gray-800/70 transition-all group ${
         isCurrentTrack ? 'bg-green-50/70 dark:bg-green-900/20' : 'bg-white/50 dark:bg-gray-900/50'
@@ -131,7 +122,7 @@ const HomePage = () => {
             </span>
           </div>
         )}
-        
+
         <div className="relative">
           <img
             src={track.cover || '/default_cover.jpg'}
@@ -144,7 +135,7 @@ const HomePage = () => {
             </div>
           )}
         </div>
-        
+
         <div className="flex-grow min-w-0">
           <h3 className={`font-semibold truncate ${
             isCurrentTrack ? 'text-green-600 dark:text-green-400' : 'text-gray-800 dark:text-white'
@@ -163,8 +154,8 @@ const HomePage = () => {
           <button
             onClick={() => handlePlay(track, queue)}
             className={`w-10 h-10 flex items-center justify-center rounded-full transition-all ${
-              isCurrentlyPlaying 
-                ? 'bg-green-500 hover:bg-green-600 text-white' 
+              isCurrentlyPlaying
+                ? 'bg-green-500 hover:bg-green-600 text-white'
                 : 'bg-indigo-500 hover:bg-indigo-600 text-white'
             }`}
             title={isCurrentlyPlaying ? 'Currently Playing' : 'Play Track'}
@@ -195,45 +186,40 @@ const HomePage = () => {
     );
   };
 
-  if (!data) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-indigo-900">
-        <div className="p-12 text-center">
-          <div className="animate-spin w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-300 text-lg">Loading your personalized music feed...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-indigo-900">
       <div className="px-4 md:px-8 py-8 max-w-7xl mx-auto">
-        
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-4xl md:text-5xl font-black mb-2 text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 dark:from-indigo-400 dark:via-purple-400 dark:to-pink-400">
-              {data.greeting}
-            </h1>
-            <p className="text-gray-600 dark:text-gray-400">
-              Discover music from {data.metadata?.market} • {data.metadata?.genres?.join(', ')}
-            </p>
-          </div>
-          <button
-            onClick={handleRefresh}
-            className={`flex items-center gap-2 px-4 py-2 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl shadow-lg hover:shadow-xl transition-all ${
-              isRefreshing ? 'animate-pulse' : ''
-            }`}
-          >
-            <RefreshCw size={18} className={isRefreshing ? 'animate-spin' : ''} />
-            <span className="font-medium">Refresh</span>
-          </button>
-        </div>
-
         <SearchBar />
 
-        {/* Artist Spotlight */}
+        {!data ? (
+          <div className="p-12 text-center">
+            <div className="animate-spin w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+            <p className="text-gray-600 dark:text-gray-300 text-lg">Loading your personalized music feed...</p>
+          </div>
+        ) : (
+          <>
+            {/* HEADER */}
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h1 className="text-4xl md:text-5xl font-black mb-2 text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 dark:from-indigo-400 dark:via-purple-400 dark:to-pink-400">
+                  {data.greeting}
+                </h1>
+                <p className="text-gray-600 dark:text-gray-400">
+                  Discover music from {data.metadata?.market} • {data.metadata?.genres?.join(', ')}
+                </p>
+              </div>
+              <button
+                onClick={handleRefresh}
+                className={`flex items-center gap-2 px-4 py-2 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl shadow-lg hover:shadow-xl transition-all ${
+                  isRefreshing ? 'animate-pulse' : ''
+                }`}
+              >
+                <RefreshCw size={18} className={isRefreshing ? 'animate-spin' : ''} />
+                <span className="font-medium">Refresh</span>
+              </button>
+            </div>
+
+                    {/* Artist Spotlight */}
         {data.artistSpotlight?.tracks?.length > 0 && (
           <section className="mb-12">
             <div className="flex items-center gap-3 mb-6">
@@ -422,6 +408,8 @@ const HomePage = () => {
             </div>
           </div>
         </footer>
+          </>
+        )}
       </div>
     </div>
   );
