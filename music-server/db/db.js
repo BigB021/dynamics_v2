@@ -197,6 +197,8 @@ module.exports = {
       WHERE d.status = 'downloaded'
       ORDER BY f.added_at DESC
     `).all();
-  }
+  },
+
+  // Fetch Artists
 
 };
