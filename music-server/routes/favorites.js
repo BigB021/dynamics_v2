@@ -25,10 +25,10 @@ router.get('/', (req, res) => {
           : mediaBaseUrl + encodeURIComponent(track.cover)
       ) : '/default_cover.jpeg',
       // Ensure consistent field names
-      title: track.title || 'Unknown Title',
-      artist: track.artist || 'Unknown Artist',
-      album: track.album || 'Unknown Album',
-      duration: track.duration || '3:45'
+      title: track.title ,
+      artist: track.artist ,
+      album: track.album ,
+      duration: track.duration 
     }));
     
     console.log('Favorites with URLs:', favoritesWithUrls); // Debug log

@@ -58,7 +58,7 @@ db.prepare(`
   CREATE TABLE IF NOT EXISTS favorites (
     spotify_id TEXT PRIMARY KEY,
     added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (spotify_id) REFERENCES downloads(spotify_id)
+    FOREIGN KEY (spotify_id) REFERENCES downloads(spotify_id) ON DELETE CASCADE
   )
 `).run();
 
@@ -80,6 +80,9 @@ module.exports = {
   },
 
   deleteDownloadBySpotifyId(spotifyId) {
+    const deleteFav = db.prepare('DELETE FROM favorites WHERE spotify_id = ?');
+    deleteFav.run(spotifyId);
+
     return db.prepare('DELETE FROM downloads WHERE spotify_id = ?').run(spotifyId);
   },
 

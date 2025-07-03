@@ -25,26 +25,45 @@ const DownloadedTracks = () => {
     playTrack(track, tracks);
   };
 
-  useEffect(() => {
-    setLoading(true);
-    fetch('http://localhost:3000/api/downloaded')
-      .then(res => res.json())
-      .then(data => {
-        const parsed = data.map(track => ({
-          ...track,
-          id: `${track.filename}-${Date.now()}`,
-          title: track.title || 'Unknown Title',
-          artist: track.artist || 'Unknown Artist',
-          cover: track.cover || '/default_cover.jpg',
-          // Add any missing fields that TrackList might expect
-          album: track.album || 'Downloaded',
-          duration: track.duration || '3:45',
-        }));
-        setTracks(parsed);
-      })
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, []);
+
+useEffect(() => {
+  setLoading(true);
+  fetch('http://localhost:3000/api/downloaded')
+    .then(res => res.json())
+    .then(data => {
+      console.log('Raw tracks from API:', data);
+      const parsed = data.map(track => ({
+        ...track,
+        id: `${track.filename}-${Date.now()}`,
+        title: track.title || 'Unknown Title',
+        artist: track.artist || 'Unknown Artist',
+        cover: track.cover || '/default_cover.jpg',
+        album: track.album || 'Downloaded',
+        duration: typeof track.duration === 'string'
+          ? parseDurationString(track.duration)
+          : track.duration || 0,
+      }));
+      console.log('Parsed tracks:', parsed);
+      setTracks(parsed);
+    })
+    .catch(console.error)
+    .finally(() => setLoading(false));
+}, []);
+
+
+  function parseDurationString(durationStr) {
+    if (!durationStr || typeof durationStr !== 'string') return 0;
+    const parts = durationStr.split(':').map(Number);
+    if (parts.length === 2) {
+      // mm:ss format
+      return parts[0] * 60 + parts[1];
+    } else if (parts.length === 3) {
+      // hh:mm:ss format
+      return parts[0] * 3600 + parts[1] * 60 + parts[2];
+    }
+    return 0;
+  }
+
 
   if (loading) {
     return (
