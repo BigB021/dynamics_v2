@@ -10,6 +10,7 @@ import DownloadedAlbums from './components/DownloadedAlbums';
 import AlbumPage from './components/AlbumPage';
 import Favorites from './components/Favorites';
 import HomePage from './components/HomePage';
+import AlbumPreviewPage from './components/AlbumPreviewPage';
 
 function App() {
   const [query, setQuery] = useState('');
@@ -29,6 +30,7 @@ function App() {
         <Route path="/playlist/:id" element={<PlaylistDetail />} />
         <Route path="/albums" element={<DownloadedAlbums />} />
         <Route path="/albums/:spotify_id" element={<AlbumPage />} />
+        <Route path="/album/:spotify_id" element={<AlbumPreviewPage />} />
         <Route path="/favorites" element={<Favorites />} />
       </Routes>
 

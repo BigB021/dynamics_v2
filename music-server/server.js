@@ -10,6 +10,7 @@ const playlistRoutes = require('./routes/playlists');
 const albumRoutes = require('./routes/albums');
 const favoriteRoutes = require('./routes/favorites');
 const homeRoute = require('./routes/home');
+const previewedAlbumsRoute = require('./routes/previewedAlbums.js');
 
 
 dotenv.config();
@@ -31,6 +32,7 @@ app.use('/api/playlists', playlistRoutes);
 app.use('/api/albums', albumRoutes);
 app.use('/api/favorites', favoriteRoutes);
 app.use('/api/home', homeRoute);
+app.use('/api/preview/album', previewedAlbumsRoute);
 
 
 

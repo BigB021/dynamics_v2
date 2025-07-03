@@ -46,6 +46,13 @@ const TrackRow = ({ track, queue, showIndex = false, index = 0 }) => {
   }, [spotifyId]);
 
   const handleDownload = async () => {
+    console.log('Downloading track:', track);
+    console.log('Downloading track url:', track.url);
+    if (!track.url) {
+      alert('Track URL is undefined, cannot download');
+      return;
+    }
+
     setIsDownloading(true);
     setProgressText('Starting download...');
 

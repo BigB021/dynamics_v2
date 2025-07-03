@@ -61,6 +61,7 @@ const mapTrackSafely = (track) => {
     duration: track.duration_ms ? Math.floor(track.duration_ms / 1000) : 0,
     spotify_id: track.id,
     preview_url: track.preview_url || null,
+    url: `https://open.spotify.com/track/${track.id}`,
   };
 };
 
