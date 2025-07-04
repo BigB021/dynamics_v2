@@ -12,7 +12,8 @@ db.prepare(`
     username TEXT UNIQUE NOT NULL,
     email TEXT UNIQUE,
     password_hash TEXT NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    profile_picture TEXT
   )
 `).run();
 
@@ -96,6 +97,14 @@ module.exports = {
 
   getUserById(userId) {
     return db.prepare('SELECT * FROM users WHERE id = ?').get(userId);
+  },
+
+  updateUsername(userId, newUsername) {
+    return db.prepare(`UPDATE users SET username = ? WHERE id = ?`).run(newUsername, userId);
+  },
+
+  updateProfilePicture(userId, picturePath) {
+    return db.prepare(`UPDATE users SET profile_picture = ? WHERE id = ?`).run(picturePath, userId);
   },
 
   // === TRACKS ===

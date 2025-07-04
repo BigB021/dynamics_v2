@@ -4,6 +4,7 @@ import { authFetch } from '../utils/authFetch';
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null); 
   const [token, setToken] = useState(() => {
   const t = localStorage.getItem('token');
   if (t === 'null' || t === 'undefined') {
@@ -20,7 +21,6 @@ export const AuthProvider = ({ children }) => {
     return id;
   });
 
-  const [user, setUser] = useState(null); // 🆕 Store user info
 
   // 🆕 Fetch user info if token exists
   useEffect(() => {
@@ -74,7 +74,7 @@ export const AuthProvider = ({ children }) => {
   }, [userId]);
 
   return (
-    <AuthContext.Provider value={{ token, userId, user, login, logout }}>
+    <AuthContext.Provider value={{ token, userId, user, setUser, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
