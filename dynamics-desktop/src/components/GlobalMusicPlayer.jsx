@@ -1,6 +1,6 @@
-import React, { useEffect, useRef, useState, useContext, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useContext, useCallback, useMemo } from 'react';
 import { PlayerContext } from '../context/PlayerContext';
-import { toggleFavorite, isTrackFavorite } from '../utils/favoritesAPI';
+import { FavoritesContext } from '../context/FavoritesContext';
 import {
   Play,
   Pause,
@@ -15,7 +15,7 @@ import {
   Music,
 } from 'lucide-react';
 
-const GlobalMusicPlayer = ({ theme = 'dark' }) => {
+const GlobalMusicPlayer = () => {
   const {
     currentTrack,
     playNext,
@@ -28,16 +28,18 @@ const GlobalMusicPlayer = ({ theme = 'dark' }) => {
   } = useContext(PlayerContext);
 
   const audioRef = useRef(null);
+  const { isFavorite, toggleFavorite } = useContext(FavoritesContext);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(0.7);
   const [isMuted, setIsMuted] = useState(false);
-  const [isLiked, setIsLiked] = useState(false);
   const [isShuffled, setIsShuffled] = useState(false);
   const [repeatMode, setRepeatMode] = useState(0);
   const [loadedTrackId, setLoadedTrackId] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  const isLiked = currentTrack && isFavorite(currentTrack.spotify_id);
 
   const getTrackId = useCallback((track) => 
     track ? `${track.url}-${track.title}-${track.artist}` : null, []);
@@ -120,11 +122,7 @@ const GlobalMusicPlayer = ({ theme = 'dark' }) => {
     };
   }, [currentTrack, getTrackId, loadedTrackId, isPlaying, shouldAutoPlay, setShouldAutoPlay]);
 
-  useEffect(() => {
-      if (currentTrack) {
-        isTrackFavorite(currentTrack.spotify_id).then(setIsLiked);
-      }
-    }, [currentTrack]);
+
   // Audio event listeners
   useEffect(() => {
     const audio = audioRef.current;
@@ -247,19 +245,28 @@ const GlobalMusicPlayer = ({ theme = 'dark' }) => {
               <div className="text-white font-semibold text-sm truncate">{currentTrack.title}</div>
               <div className="text-zinc-400 text-xs truncate">{currentTrack.artist}</div>
             </div>
-            <button
-              onClick={async () => {
-                const success = await toggleFavorite(currentTrack.spotify_id, isLiked);
-                if (success) setIsLiked(!isLiked);
-              }}
-              className="ml-2 text-pink-500 hover:text-pink-600"
-            >
-              <Heart
-                className="w-5 h-5"
-                strokeWidth={isLiked ? 0 : 2}
-                fill={isLiked ? 'currentColor' : 'none'}
-              />
-            </button>
+              <button
+                onClick={async () => {
+                  if (!currentTrack || !currentTrack.spotify_id) {
+                    console.error('Missing spotify_id for currentTrack');
+                    return;
+                  }
+                  const success = await toggleFavorite(currentTrack.spotify_id, currentTrack);
+                  if (!success) {
+                    console.error('Failed to toggle favorite');
+                  }
+                }}
+                className="ml-2 text-pink-500 hover:text-pink-600"
+                aria-label={isLiked ? 'Remove from favorites' : 'Add to favorites'}
+              >
+                <Heart
+                  className="w-5 h-5"
+                  strokeWidth={isLiked ? 0 : 2}
+                  fill={isLiked ? 'currentColor' : 'none'}
+                />
+              </button>
+              
+            
             
           </div>
 

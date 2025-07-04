@@ -1,23 +1,32 @@
-import { authFetch } from '../utils/authFetch';
+import axios from 'axios';
 
-export async function toggleFavorite(spotifyId, liked) {
-  const method = liked ? 'DELETE' : 'POST';
-  const url = liked ? `/api/favorites/${spotifyId}` : `/api/favorites`;
-  const body = liked ? null : JSON.stringify({ spotifyId });
-
-  const res = await authFetch(url, {
-    method,
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body,
+export const getFavorites = async (token) => {
+  const res = await axios.get('http://localhost:3000/api/favorites', {
+    headers: { Authorization: `Bearer ${token}` },
   });
+  return res.data;
+};
 
-  return res.ok;
-}
+export const toggleFavorite = async (spotifyId, isLiked, token) => {
+  try {
+    if (isLiked) {
+      // DELETE uses the URL param
+      const res = await axios.delete(`http://localhost:3000/api/favorites/${spotifyId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return res.status === 200;
+    } else {
+      // POST should send the ID in the body
+      const res = await axios.post(`http://localhost:3000/api/favorites`, {
+        spotifyId
+      }, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return res.status === 200 || res.status === 201;
+    }
+  } catch (err) {
+    console.error('toggleFavorite error:', err);
+    return false;
+  }
+};
 
-export async function isTrackFavorite(spotifyId) {
-  const res = await authFetch(`/api/favorites/${spotifyId}`);
-  const data = await res.json();
-  return data.isFavorite;
-}

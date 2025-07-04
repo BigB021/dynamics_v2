@@ -16,8 +16,9 @@ import {
 } from 'lucide-react';
 
 const Profile = () => {
-  const { token } = useContext(AuthContext);
-  const [user, setUser] = useState(null);
+  //const [user, setUser] = useState(null);
+  const { token, user, setUser } = useContext(AuthContext);
+
   const [newUsername, setNewUsername] = useState('');
   const [avatar, setAvatar] = useState(null);
   const [loading, setLoading] = useState(true);
