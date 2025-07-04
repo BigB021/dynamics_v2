@@ -1,19 +1,22 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, Trash2, Music, Calendar } from 'lucide-react';
+import { AuthContext } from '../context/AuthContext';
+import { authFetch } from '../utils/authFetch';
 
 const PlaylistPage = () => {
   const [playlists, setPlaylists] = useState([]);
   const [name, setName] = useState('');
   const [cover, setCover] = useState(null);
   const [showForm, setShowForm] = useState(false);
+  const { user } = useContext(AuthContext);
 
   useEffect(() => {
     fetchPlaylists();
   }, []);
 
   const fetchPlaylists = () => {
-    fetch('http://localhost:3000/api/playlists')
+    authFetch('http://localhost:3000/api/playlists')
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data)) {
@@ -36,7 +39,7 @@ const PlaylistPage = () => {
     if (cover) formData.append('cover', cover);
 
     try {
-      const res = await fetch('http://localhost:3000/api/playlists', {
+      const res = await authFetch('http://localhost:3000/api/playlists', {
         method: 'POST',
         body: formData,
       });
@@ -56,7 +59,7 @@ const PlaylistPage = () => {
     if (!window.confirm('Are you sure you want to delete this playlist?')) return;
 
     try {
-      const res = await fetch(`http://localhost:3000/api/playlists/${id}`, {
+      const res = await authFetch(`http://localhost:3000/api/playlists/${id}`, {
         method: 'DELETE',
       });
 
@@ -71,6 +74,10 @@ const PlaylistPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-zinc-950 dark:via-zinc-900 dark:to-indigo-950 text-theme.neon.text flex flex-col">
       <div className="p-8 max-w-7xl mx-auto flex-grow">
+        <p className="text-theme.neon.textSecondary text-lg select-none">
+  Welcome back, {user?.username || 'Guest'} — {playlists.length} {playlists.length === 1 ? 'playlist' : 'playlists'}
+</p>
+
         {/* Header */}
         <div className="flex justify-between items-center mb-12">
           <div>

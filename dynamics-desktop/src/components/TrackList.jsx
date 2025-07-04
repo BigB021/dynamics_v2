@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect, useContext } from 'react';
 import { Play, Pause, MoreVertical, Heart, Plus } from 'lucide-react';
 import { PlayerContext } from '../context/PlayerContext';
+import { authFetch } from '../utils/authFetch';
+import { AuthContext } from '../context/AuthContext';
 
 const TrackListItem = ({ track, onDelete, onPlay, index }) => {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -10,50 +12,54 @@ const TrackListItem = ({ track, onDelete, onPlay, index }) => {
   const menuRef = useRef();
 
   const { setCurrentTrack, setQueue, currentTrack, setShouldAutoPlay, playTrack, isPlaying } = useContext(PlayerContext);
+  const { token } = useContext(AuthContext);
+
 
   useEffect(() => {
-    fetch(`http://localhost:3000/api/favorites/${track.spotify_id}`)
-      .then(res => res.json())
+    if (!token) {
+      setIsLiked(false);
+      return;
+    }
+    authFetch(`http://localhost:3000/api/favorites/${track.spotify_id}`)
+      .then(res => {
+        if (!res.ok) throw new Error('Unauthorized');
+        return res.json();
+      })
       .then(data => setIsLiked(data.isFavorite))
       .catch(() => setIsLiked(false));
-  }, [track.spotify_id]);
+  }, [track.spotify_id, token]);
 
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (menuRef.current && !menuRef.current.contains(event.target)) {
-        setMenuOpen(false);
-        setPlaylistMenuOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const fetchPlaylists = () => {
-    fetch('http://localhost:3000/api/playlists')
-      .then(res => res.json())
-      .then(setPlaylists)
-      .catch(console.error);
+  const fetchPlaylists = async () => {
+    if (!token) return alert("You must be logged in");
+    try {
+      const res = await authFetch('http://localhost:3000/api/playlists'); // No headers here
+      if (!res.ok) throw new Error('Failed to fetch playlists');
+      const data = await res.json();
+      setPlaylists(data);
+    } catch (err) {
+      console.error(err);
+      alert('Failed to load playlists');
+    }
   };
 
-  const handleAddToPlaylist = (playlistId) => {
-    fetch(`http://localhost:3000/api/playlists/${playlistId}/tracks`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ spotifyId: track.spotify_id }),
-    })
-      .then(res => res.json())
-      .then(data => {
-        alert('Added to playlist');
-        setMenuOpen(false);
-        setPlaylistMenuOpen(false);
-      })
-      .catch(err => {
-        alert('Failed to add track');
-        console.error(err);
+  const handleAddToPlaylist = async (playlistId) => {
+    if (!token) return alert("You must be logged in");
+    try {
+      const res = await authFetch(`http://localhost:3000/api/playlists/${playlistId}/tracks`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ spotifyId: track.spotify_id }),  
       });
+      if (!res.ok) throw new Error('Failed to add track to playlist');
+      alert('Track added to playlist');
+      setMenuOpen(false);
+      setPlaylistMenuOpen(false);
+    } catch (err) {
+      console.error(err);
+      alert('Failed to add track to playlist');
+    }
   };
+
 
   const clickLock = useRef(false);
 
@@ -72,34 +78,35 @@ const TrackListItem = ({ track, onDelete, onPlay, index }) => {
     
     if (isLiked) {
       // Remove favorite
-      fetch(`http://localhost:3000/api/favorites/${track.spotify_id}`, {
+      authFetch(`http://localhost:3000/api/favorites/${track.spotify_id}`, {
         method: 'DELETE',
       })
-        .then(res => {
-          if (!res.ok) throw new Error('Failed to remove favorite');
-          setIsLiked(false);
-        })
-        .catch(err => {
-          alert('Error removing from favorites');
-          console.error(err);
-        });
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to remove favorite');
+        setIsLiked(false);
+      })
+      .catch(err => {
+        alert('Error removing from favorites');
+        console.error(err);
+      });
     } else {
       // Add favorite
-      fetch(`http://localhost:3000/api/favorites`, {
+      authFetch(`http://localhost:3000/api/favorites`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ spotifyId: track.spotify_id }),
       })
-        .then(res => {
-          if (!res.ok) throw new Error('Failed to add favorite');
-          setIsLiked(true);
-        })
-        .catch(err => {
-          alert('Error adding to favorites');
-          console.error(err);
-        });
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to add favorite');
+        setIsLiked(true);
+      })
+      .catch(err => {
+        alert('Error adding to favorites');
+        console.error(err);
+      });
     }
   };
+  
 
 
   const formatDuration = (seconds) => {

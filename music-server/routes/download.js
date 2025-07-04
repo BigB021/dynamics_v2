@@ -3,11 +3,13 @@ const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
 const { downloadWithSpotDL, getProgress } = require('../downloader/spotdl');
 const {getDownloadBySpotifyId,deleteDownloadBySpotifyId} = require('../db/db')
+const { authenticateToken } = require('./auth');
 
 const router = express.Router();
 
 const tasks = {}; // taskId => Promise
 
+router.use(authenticateToken);
 
 
 router.get('/check', (req, res) => {
@@ -15,7 +17,7 @@ router.get('/check', (req, res) => {
   if (!spotifyId) return res.status(400).json({ error: 'Missing spotifyId query param' });
 
   try {
-    const download = getDownloadBySpotifyId(spotifyId);
+    const download = getDownloadBySpotifyId(req.userId,spotifyId);
 
     if (download && download.status === 'downloaded') {
       const fileExists = fs.existsSync(download.file_path);
@@ -24,7 +26,7 @@ router.get('/check', (req, res) => {
         return res.json({ downloaded: true, filePath: download.file_path });
       } else {
         console.warn(`🧹 File missing for ${spotifyId}, removing DB entry.`);
-        deleteDownloadBySpotifyId(spotifyId);
+        deleteDownloadBySpotifyId(req.userId,spotifyId);
         return res.json({ downloaded: false });
       }
     }
@@ -42,7 +44,7 @@ router.post('/', (req, res) => {
   if (!url) return res.status(400).json({ error: 'Missing Spotify URL' });
 
   const taskId = uuidv4();
-  tasks[taskId] = downloadWithSpotDL(url, taskId).catch(() => {}); // prevent unhandled rejections
+  tasks[taskId] = downloadWithSpotDL(url, taskId, req.userId).catch(() => {}); // prevent unhandled rejections
 
   res.json({ taskId, message: 'Download started' });
 });

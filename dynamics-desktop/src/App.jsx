@@ -11,6 +11,8 @@ import AlbumPage from './components/AlbumPage';
 import Favorites from './components/Favorites';
 import HomePage from './components/HomePage';
 import AlbumPreviewPage from './components/AlbumPreviewPage';
+import Login from './components/Login';
+import Register from './components/Rgister';
 
 function App() {
   const [query, setQuery] = useState('');
@@ -32,6 +34,8 @@ function App() {
         <Route path="/albums/:spotify_id" element={<AlbumPage />} />
         <Route path="/album/:spotify_id" element={<AlbumPreviewPage />} />
         <Route path="/favorites" element={<Favorites />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
       </Routes>
 
       <GlobalMusicPlayer />

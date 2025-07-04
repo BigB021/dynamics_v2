@@ -1,17 +1,25 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState, useContext } from 'react';
 import { Album } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { AuthContext } from '../context/AuthContext'; 
 
 const DownloadedAlbums = () => {
   const [albums, setAlbums] = useState([]);
   const navigate = useNavigate();
+  const { token } = useContext(AuthContext); 
 
   useEffect(() => {
     fetchAlbums();
-  }, []);
+  }, [token]);
 
   const fetchAlbums = () => {
-    fetch('http://localhost:3000/api/albums')
+    if (!token) return;
+
+    fetch('http://localhost:3000/api/albums', {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
       .then((res) => res.json())
       .then((data) => {
         console.log('Downloaded albums:', data);
@@ -21,14 +29,17 @@ const DownloadedAlbums = () => {
   };
 
   const handleDelete = (albumId, albumName) => {
+    if (!token) return;
     if (!window.confirm(`Are you sure you want to delete the album "${albumName}"?`)) return;
 
     fetch(`http://localhost:3000/api/albums/${albumId}`, {
       method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     })
       .then((res) => res.json())
       .then(() => {
-        // Remove album from UI
         setAlbums((prev) => prev.filter((album) => album.id !== albumId));
       })
       .catch((err) => {
@@ -54,7 +65,6 @@ const DownloadedAlbums = () => {
               key={`${album.id}`}
               className="relative group bg-white dark:bg-zinc-900 rounded-xl shadow hover:shadow-lg transition-all"
             >
-              {/* Album cover and info */}
               <div
                 onClick={() => navigate(`/albums/${encodeURIComponent(album.id)}`)}
                 className="cursor-pointer"
@@ -80,7 +90,6 @@ const DownloadedAlbums = () => {
                 </div>
               </div>
 
-              {/* Delete Button */}
               <button
                 onClick={(e) => {
                   e.stopPropagation();

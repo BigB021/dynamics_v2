@@ -7,6 +7,7 @@ import {
 import { PlayerContext } from '../context/PlayerContext';
 import SearchBar from './SearchBar';
 import TrackRow from './TrackRow';
+import { AuthContext } from '../context/AuthContext';
 
 const HomePage = () => {
   const [data, setData] = useState(null);
@@ -18,10 +19,17 @@ const HomePage = () => {
 
   const navigate = useNavigate();
   const { playTrack, setQueue, currentTrack, isPlaying } = useContext(PlayerContext);
+    const { token } = useContext(AuthContext);  
+
 
   const fetchData = async () => {
     try {
-      const res = await fetch('http://localhost:3000/api/home');
+      const res = await fetch('http://localhost:3000/api/home', {
+        headers: {
+          Authorization: `Bearer ${token}`,  
+        },
+      });
+      if (!res.ok) throw new Error('Failed to fetch');
       const newData = await res.json();
       setData(newData);
     } catch (err) {
@@ -30,82 +38,16 @@ const HomePage = () => {
   };
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    if (token) {
+        fetchData();
+    }
+  }, [token]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
     await fetchData();
     setTimeout(() => setIsRefreshing(false), 1000);
   };
-
-  const checkIfDownloaded = (trackId, filePath) => {
-    setDownloadedTracks(prev => ({
-      ...prev,
-      [trackId]: `http://localhost:3000/media/${encodeURIComponent(filePath)}`,
-    }));
-  };
-
-  const handleDownload = async (track) => {
-    setDownloadingTrackId(track.id);
-    setProgressText('Starting download...');
-
-    try {
-      const res = await fetch('http://localhost:3000/api/download', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: track.url }),
-      });
-      const { taskId } = await res.json();
-
-      eventSourceRef.current = new EventSource(`http://localhost:3000/api/download/progress/${taskId}`);
-
-      eventSourceRef.current.onmessage = (event) => {
-        const { state, message } = JSON.parse(event.data);
-        setProgressText(message);
-
-        if (state === 'finished') {
-          setDownloadingTrackId(null);
-          eventSourceRef.current.close();
-          const fileName = `${track.artist} - ${track.title}.mp3`.replace(/[<>:"/\\|?*\x00-\x1F]/g, '').trim();
-          checkIfDownloaded(track.id, fileName);
-        } else if (state === 'error') {
-          setDownloadingTrackId(null);
-          eventSourceRef.current.close();
-          alert(`Download failed for "${track.title}": ${message}`);
-        }
-      };
-
-      eventSourceRef.current.onerror = () => {
-        setDownloadingTrackId(null);
-        if (eventSourceRef.current) eventSourceRef.current.close();
-      };
-    } catch (err) {
-      console.error('Download error:', err);
-      setDownloadingTrackId(null);
-      alert('Failed to start download');
-    }
-  };
-
-  const handlePlay = (track, queue) => {
-    setQueue(queue);
-    const playableUrl = downloadedTracks[track.id] || track.preview_url;
-
-    if (!playableUrl) {
-      alert('No playable audio available for this track yet.');
-      return;
-    }
-
-    playTrack({ ...track, url: playableUrl }, queue);
-  };
-
-  const formatDuration = (seconds) => {
-    if (!seconds) return '--:--';
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
-
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-indigo-900">

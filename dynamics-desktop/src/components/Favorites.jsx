@@ -1,41 +1,50 @@
 import { useEffect, useState, useContext } from 'react';
 import { Heart, Play } from 'lucide-react';
 import { PlayerContext } from '../context/PlayerContext';
+import { AuthContext } from '../context/AuthContext';
 import TrackList from '../components/TrackList';
+import { useAuthFetch } from '../utils/authFetch';
+
 
 export default function Favorites() {
   const [tracks, setTracks] = useState([]);
   const [loading, setLoading] = useState(true);
   const { playTrack, setQueue } = useContext(PlayerContext);
+  const { token } = useContext(AuthContext); 
+  const authFetch = useAuthFetch(); 
 
-  useEffect(() => {
-    setLoading(true);
-    fetch('/api/favorites')
-      .then(res => {
-        if (!res.ok) throw new Error('Failed to fetch favorites');
-        return res.json();
-      })
-      .then(setTracks)
-      .catch(err => {
-        console.error('Failed to fetch favorites:', err);
-        setTracks([]);
-      })
-      .finally(() => setLoading(false));
-  }, []);
+    useEffect(() => {
+        if (!token) return;  
+        setLoading(true);
 
-  const handleDelete = (spotifyId) => {
-    fetch(`/api/favorites/${spotifyId}`, {
-      method: 'DELETE',
-    })
-      .then((res) => {
-        if (res.ok) {
-          setTracks(prev => prev.filter(track => track.spotify_id !== spotifyId));
-        } else {
-          throw new Error('Failed to delete');
-        }
-      })
-      .catch(err => console.error('Error deleting favorite:', err));
-  };
+        authFetch('/api/favorites')
+          .then(res => {
+            if (!res.ok) throw new Error('Failed to fetch favorites');
+            return res.json();
+          })
+          .then(setTracks)
+          .catch(err => {
+            console.error('Failed to fetch favorites:', err);
+            setTracks([]);
+          })
+          .finally(() => setLoading(false));
+      }, [token]);
+
+
+    const handleDelete = (spotifyId) => {
+        authFetch(`/api/favorites/${spotifyId}`, {
+          method: 'DELETE',
+        })
+          .then((res) => {
+            if (res.ok) {
+              setTracks(prev => prev.filter(track => track.spotify_id !== spotifyId));
+            } else {
+              throw new Error('Failed to delete');
+            }
+          })
+          .catch(err => console.error('Error deleting favorite:', err));
+      };
+
 
   const handlePlay = (track) => {
     if (!track.url && track.filename) {

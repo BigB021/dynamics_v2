@@ -4,7 +4,7 @@ const path = require('path');
 const fs = require('fs');
 const { parseFile } = require('music-metadata');
 
-const { db, getPlaylistById, getAllPlaylists, createPlaylist, addTrackToPlaylist } = require('../db/db');
+const { db, getAllPlaylists, createPlaylist, addTrackToPlaylist } = require('../db/db');
 
 const router = express.Router();
 const uploadDir = path.resolve(__dirname, '../media/playlist_covers');
@@ -24,13 +24,17 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
+const { authenticateToken } = require('./auth');
+router.use(authenticateToken);
+
+
 // Create playlist
 router.post('/', upload.single('cover'), (req, res) => {
   const { name } = req.body;
   const cover = req.file ? `playlist_covers/${req.file.filename}` : null;
 
   try {
-    const result = createPlaylist(name, cover);
+    const result = createPlaylist(req.userId,name, cover);
     const newPlaylist = { id: result.lastInsertRowid, name, cover };
     res.status(201).json(newPlaylist);
   } catch (err) {
@@ -113,7 +117,7 @@ router.get('/:id', (req, res) => {
 
 router.get('/', (req, res) => {
   try {
-    const playlists = getAllPlaylists();
+    const playlists = getAllPlaylists(req.userId);
     res.json(playlists);
   } catch (err) {
     console.error('[GET /api/playlists] error:', err);

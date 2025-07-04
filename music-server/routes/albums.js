@@ -3,16 +3,21 @@ const path = require('path');
 const fs = require('fs');
 const { parseFile } = require('music-metadata');
 const { getAllAlbums, getAlbumAndTracksBySpotifyId, deleteAlbumBySpotifyId, db } = require('../db/db');
+const { authenticateToken } = require('./auth');
+
 
 const router = express.Router();
 const mediaBaseUrl = 'http://localhost:3000/media/';
 
+router.use(authenticateToken);
+
 // GET /api/albums — list all albums
 router.get('/', (req, res) => {
   try {
-    const albums = getAllAlbums();
+    //const albums = getAllAlbums(req.userId).filter(a => a.spotify_id);
+    const albums = getAllAlbums(req.userId);
     const formatted = albums.map((album) => ({
-      id: album.spotify_id,
+      id: album.spotify_id,         
       name: album.name,
       artist: album.artist,
       release_date: album.release_date,
@@ -30,7 +35,7 @@ router.get('/:spotify_id', async (req, res) => {
   const spotifyId = req.params.spotify_id;
 
   try {
-    const result = getAlbumAndTracksBySpotifyId(spotifyId);
+    const result = getAlbumAndTracksBySpotifyId(req.userId,spotifyId);
     if (!result) return res.status(404).json({ error: 'Album not found' });
 
     const { album, tracks } = result;
@@ -85,7 +90,7 @@ router.delete('/:spotify_id', (req, res) => {
   const spotifyId = req.params.spotify_id;
 
   try {
-    deleteAlbumBySpotifyId(spotifyId);
+    deleteAlbumBySpotifyId(req.userId,spotifyId);
     res.json({ success: true });
   } catch (err) {
     console.error('❌ Error deleting album:', err);

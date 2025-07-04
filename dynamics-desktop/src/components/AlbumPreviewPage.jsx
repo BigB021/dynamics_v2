@@ -1,9 +1,10 @@
-import React, { useEffect, useState, useRef, useContext } from 'react';
+import { useEffect, useState, useRef, useContext } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import { Download, Loader2, Play } from 'lucide-react';
 import TrackRow from '../components/TrackRow';
 import { PlayerContext } from '../context/PlayerContext';
+import { AuthContext } from '../context/AuthContext';
 
 const AlbumPreviewPage = () => {
   const { spotify_id } = useParams();
@@ -12,16 +13,23 @@ const AlbumPreviewPage = () => {
   const [isDownloadingAll, setIsDownloadingAll] = useState(false);
   const [error, setError] = useState(null);
   const eventSourceRef = useRef(null);
-
   const { setQueue, playTrack } = useContext(PlayerContext);
+  const { token } = useContext(AuthContext); 
 
   useEffect(() => {
-    // Fetch album data and tracks from backend proxy or directly from Spotify API
-    // Your backend /api/albums/:spotify_id should fetch from Spotify and send album + tracks
+    if (!token) return;
+
     const fetchAlbum = async () => {
       setError(null);
       try {
-        const res = await axios.get(`http://localhost:3000/api/preview/album/${spotify_id}`);
+        const res = await axios.get(
+          `http://localhost:3000/api/preview/album/${spotify_id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
         setAlbum(res.data.album);
         setTracks(res.data.tracks || []);
       } catch (err) {
@@ -32,27 +40,38 @@ const AlbumPreviewPage = () => {
 
     fetchAlbum();
 
-    // Cleanup SSE connection on unmount or id change
     return () => {
       if (eventSourceRef.current) {
         eventSourceRef.current.close();
         eventSourceRef.current = null;
       }
     };
-  }, [spotify_id]);
+  }, [spotify_id, token]);
 
   const handleDownloadAll = async () => {
-    if (!album) return;
+    if (!album || !token) return;
+
     setIsDownloadingAll(true);
     setError(null);
 
     try {
-      const res = await axios.post('http://localhost:3000/api/download', {
-        url: `https://open.spotify.com/album/${spotify_id}`,
-      });
+      const res = await axios.post(
+        'http://localhost:3000/api/download',
+        {
+          url: `https://open.spotify.com/album/${spotify_id}`,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       const { taskId } = res.data;
-      eventSourceRef.current = new EventSource(`http://localhost:3000/api/download/progress/${taskId}`);
+      eventSourceRef.current = new EventSource(
+        `http://localhost:3000/api/download/progress/${taskId}?token=${token}`
+      );
+
 
       eventSourceRef.current.onmessage = (event) => {
         const { state, message } = JSON.parse(event.data);
