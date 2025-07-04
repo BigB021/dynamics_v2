@@ -94,15 +94,12 @@ const playNext = useCallback(({ shuffle = false } = {}) => {
     };
   }, []);
 
-  const generateTrackId = (track) => track.spotify_id || extractSpotifyId(track.url) || `${track.artist}-${track.title}`;
-
   const playTrack = (track, queue = [track]) => {
     setCurrentTrack(null);
     setTimeout(() => {
-      const trackId = generateTrackId(track);
       setQueue(queue);
       setShouldAutoPlay(true);
-      setCurrentTrack({ ...track,trackId });
+      setCurrentTrack({ ...track });
     }, 50);
   };
 
@@ -121,7 +118,7 @@ const playNext = useCallback(({ shuffle = false } = {}) => {
     audioInstanceRef,
     shouldAutoPlay,
     setShouldAutoPlay,
-    playTrack,
+    playTrack
   };
 
   return (

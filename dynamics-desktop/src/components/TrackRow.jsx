@@ -1,9 +1,8 @@
-import React, { useState, useRef, useEffect, useContext } from 'react';
+import { useState, useRef, useEffect, useContext } from 'react';
 import axios from 'axios';
 import { Play, Download, Heart, Loader2 } from 'lucide-react';
 import { PlayerContext } from '../context/PlayerContext';
 import { AuthContext } from '../context/AuthContext';
-import { FavoritesContext } from '../context/FavoritesContext';
 
 const extractSpotifyId = (url) => {
   const match = url?.match(/track\/([a-zA-Z0-9]+)/);
@@ -33,9 +32,7 @@ const TrackRow = ({ track, queue, showIndex = false, index = 0 }) => {
   const isCurrentlyPlaying = isCurrentTrack && isPlaying;
 
   const spotifyId = extractSpotifyId(track.url) || track.spotify_id;
-  const { favorites, isFavorite, toggleFavorite } = useContext(FavoritesContext);
   
-  const liked = isFavorite(spotifyId);
 
 
 
@@ -120,14 +117,6 @@ const TrackRow = ({ track, queue, showIndex = false, index = 0 }) => {
     return `${m}:${s.toString().padStart(2, '0')}`;
   };
 
-  const handleToggleFavorite = async () => {
-    const success = await toggleFavorite(spotifyId, track);
-
-    if (!success) {
-      console.warn('Failed to toggle favorite for track:', track.title);
-    }
-  };
-
   return (
     <div
       className={`flex items-center gap-4 p-4 rounded-xl group transition-all overflow-hidden ${
@@ -180,18 +169,6 @@ const TrackRow = ({ track, queue, showIndex = false, index = 0 }) => {
           </button>
         )}
 
-        {/* ❤️ Like button */}
-        <button
-          onClick={handleToggleFavorite}
-          className="text-pink-500 hover:text-pink-600"
-          title={liked ? 'Remove from favorites' : 'Add to favorites'}
-        >
-          <Heart
-            className="w-5 h-5"
-            strokeWidth={liked ? 0 : 2}
-            fill={liked ? 'currentColor' : 'none'}
-          />
-        </button>
       </div>
     </div>
   );

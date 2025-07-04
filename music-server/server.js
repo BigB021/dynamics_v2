@@ -12,6 +12,7 @@ const favoriteRoutes = require('./routes/favorites');
 const homeRoute = require('./routes/home');
 const previewedAlbumsRoute = require('./routes/previewedAlbums.js');
 const userStatsRoute = require('./routes/userStats');
+const guestHomeRoute = require('./routes/guestHome');
 const { router: authRoutes } = require('./routes/auth');
 
 
@@ -43,6 +44,8 @@ app.use('/api/home', homeRoute);
 app.use('/api/preview/album', previewedAlbumsRoute);
 app.use('/api/auth', authRoutes); 
 app.use('/api/user/stats', userStatsRoute);
+app.use('/api/guest-home', guestHomeRoute);
+
 
 
 //app.use('/media', express.static(path.resolve(__dirname, 'media')));

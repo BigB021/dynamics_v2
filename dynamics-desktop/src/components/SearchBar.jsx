@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { searchTracks } from '../services/api';
 import SearchResultItem from './SearchResultItem';
-import GlobalMusicPlayer from './GlobalMusicPlayer';
 import { Search } from 'lucide-react';
 
 const SearchBar = () => {
@@ -61,11 +60,7 @@ const SearchBar = () => {
         <div className="mt-6 text-center text-zinc-500">No results found.</div>
       )}
 
-      {/* Global Player */}
-      <GlobalMusicPlayer
-        currentTrack={currentTrack}
-        onClose={() => setCurrentTrack(null)}
-      />
+   
     </div>
   );
 };
