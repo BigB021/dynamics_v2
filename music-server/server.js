@@ -11,7 +11,9 @@ const albumRoutes = require('./routes/albums');
 const favoriteRoutes = require('./routes/favorites');
 const homeRoute = require('./routes/home');
 const previewedAlbumsRoute = require('./routes/previewedAlbums.js');
+const userStatsRoute = require('./routes/userStats');
 const { router: authRoutes } = require('./routes/auth');
+
 
 
 
@@ -28,6 +30,8 @@ app.use(cors({
 
 app.use(express.json());
 
+app.use('/media', express.static(mediaDir));
+
 
 app.use('/api/search', searchRoutes);
 app.use('/api/download', downloadRoutes);
@@ -38,9 +42,10 @@ app.use('/api/favorites', favoriteRoutes);
 app.use('/api/home', homeRoute);
 app.use('/api/preview/album', previewedAlbumsRoute);
 app.use('/api/auth', authRoutes); 
+app.use('/api/user/stats', userStatsRoute);
+
 
 //app.use('/media', express.static(path.resolve(__dirname, 'media')));
-app.use('/media', express.static(mediaDir));
 
 app.listen(PORT, () => console.log(`🎵 Server running on http://localhost:${PORT}`));
 

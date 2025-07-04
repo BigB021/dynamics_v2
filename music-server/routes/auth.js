@@ -1,7 +1,21 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
-const { db, createUser, getUserByUsername, getUserById } = require('../db/db');
+const { db, createUser, getUserByUsername, getUserById, updateProfilePicture, updateUsername } = require('../db/db');
+const multer = require('multer');
+const path = require('path');
+const uploadDir = path.join(__dirname, '../media');
+
+// Configure storage
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, uploadDir),
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    cb(null, `user-${req.userId}${ext}`);
+  }
+});
+const upload = multer({ storage });
+
 
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecret'; // put this in .env
@@ -69,6 +83,26 @@ router.get('/me', authenticateToken, (req, res) => {
   const { password_hash, ...safeUser } = user;
   res.json(safeUser);
 });
+
+router.put('/me/username', authenticateToken, (req, res) => {
+  const { username } = req.body;
+  if (!username) return res.status(400).json({ error: 'Missing username' });
+
+  try {
+    updateUsername(req.userId, username);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Could not update username' });
+  }
+});
+
+router.post('/me/avatar', authenticateToken, upload.single('avatar'), (req, res) => {
+  const filename = req.file.filename;
+  updateProfilePicture(req.userId, filename);
+  res.json({ success: true, filename });
+});
+
+
 
 
 module.exports = {
