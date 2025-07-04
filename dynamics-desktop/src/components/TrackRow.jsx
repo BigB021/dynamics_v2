@@ -3,6 +3,7 @@ import axios from 'axios';
 import { Play, Download, Heart, Loader2 } from 'lucide-react';
 import { PlayerContext } from '../context/PlayerContext';
 import { AuthContext } from '../context/AuthContext';
+import { FavoritesContext } from '../context/FavoritesContext';
 
 const extractSpotifyId = (url) => {
   const match = url?.match(/track\/([a-zA-Z0-9]+)/);
@@ -19,6 +20,8 @@ const TrackRow = ({ track, queue, showIndex = false, index = 0 }) => {
   const [fileUrl, setFileUrl] = useState('');
   const eventSourceRef = useRef(null);
   const { token } = useContext(AuthContext);
+  const { isFavorite, toggleFavorite } = useContext(FavoritesContext);
+  const liked = isFavorite(track.spotify_id);
 
 
   const {

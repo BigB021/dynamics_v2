@@ -1,67 +1,40 @@
-import { useEffect, useState, useContext } from 'react';
+import { useEffect, useContext } from 'react';
 import { Heart, Play } from 'lucide-react';
 import { PlayerContext } from '../context/PlayerContext';
-import { AuthContext } from '../context/AuthContext';
+import { FavoritesContext } from '../context/FavoritesContext';
 import TrackList from '../components/TrackList';
-import { useAuthFetch } from '../utils/authFetch';
-
 
 export default function Favorites() {
-  const [tracks, setTracks] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { favorites, toggleFavorite } = useContext(FavoritesContext);
   const { playTrack, setQueue } = useContext(PlayerContext);
-  const { token } = useContext(AuthContext); 
-  const authFetch = useAuthFetch(); 
 
-    useEffect(() => {
-        if (!token) return;  
-        setLoading(true);
-
-        authFetch('/api/favorites')
-          .then(res => {
-            if (!res.ok) throw new Error('Failed to fetch favorites');
-            return res.json();
-          })
-          .then(setTracks)
-          .catch(err => {
-            console.error('Failed to fetch favorites:', err);
-            setTracks([]);
-          })
-          .finally(() => setLoading(false));
-      }, [token]);
-
-
-    const handleDelete = (spotifyId) => {
-        authFetch(`/api/favorites/${spotifyId}`, {
-          method: 'DELETE',
-        })
-          .then((res) => {
-            if (res.ok) {
-              setTracks(prev => prev.filter(track => track.spotify_id !== spotifyId));
-            } else {
-              throw new Error('Failed to delete');
-            }
-          })
-          .catch(err => console.error('Error deleting favorite:', err));
-      };
-
+  useEffect(() => {
+    console.log('[Favorites Page] Rendered with', favorites.length, 'favorite tracks');
+  }, [favorites]);
 
   const handlePlay = (track) => {
     if (!track.url && track.filename) {
       track.url = `http://localhost:3000/media/${track.filename}`;
     }
-    setQueue(tracks);
-    playTrack(track, tracks);
+    setQueue(favorites);
+    playTrack(track, favorites);
+  };
+
+  const handleDelete = async (spotifyId) => {
+    const success = await toggleFavorite(spotifyId); // Will remove from global favorites context
+    if (!success) {
+      console.error('❌ Failed to remove favorite:', spotifyId);
+    } else {
+      console.log('✅ Removed favorite:', spotifyId);
+    }
   };
 
   const getTotalDuration = () => {
-    const totalSeconds = tracks.reduce((sum, track) => sum + (track.duration || 0), 0);
+    const totalSeconds = favorites.reduce((sum, track) => sum + (track.duration || 0), 0);
     const hours = Math.floor(totalSeconds / 3600);
     const minutes = Math.floor((totalSeconds % 3600) / 60);
     return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
   };
-
-  if (loading) return <div className="p-8">Loading...</div>;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-pink-50 dark:from-gray-900 dark:via-gray-800 dark:to-purple-900">
@@ -83,8 +56,8 @@ export default function Favorites() {
                 Liked Songs
               </h1>
               <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
-                <span className="font-medium">{tracks.length} songs</span>
-                {tracks.length > 0 && (
+                <span className="font-medium">{favorites.length} songs</span>
+                {favorites.length > 0 && (
                   <>
                     <span>•</span>
                     <span>{getTotalDuration()}</span>
@@ -94,10 +67,10 @@ export default function Favorites() {
             </div>
           </div>
 
-          {tracks.length > 0 && (
+          {favorites.length > 0 && (
             <div className="flex items-center gap-4">
               <button
-                onClick={() => handlePlay(tracks[0])}
+                onClick={() => handlePlay(favorites[0])}
                 className="flex items-center gap-3 px-8 py-3 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
               >
                 <Play className="w-5 h-5" fill="currentColor" />
@@ -107,13 +80,13 @@ export default function Favorites() {
           )}
         </div>
 
-        {tracks.length === 0 ? (
+        {favorites.length === 0 ? (
           <div className="text-center py-20 text-gray-500 dark:text-gray-400">
             You have no liked songs yet.
           </div>
         ) : (
           <TrackList
-            tracks={tracks}
+            tracks={favorites}
             onDelete={handleDelete}
             onPlay={handlePlay}
             title="Liked Songs"
