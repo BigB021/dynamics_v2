@@ -1,16 +1,23 @@
-import React, { useEffect, useState, useContext } from 'react';
+import { useEffect, useState, useContext } from 'react';
 import { Music2, Download } from 'lucide-react';
 import TrackList from './TrackList';
 import { PlayerContext } from '../context/PlayerContext';
+import { AuthContext } from '../context/AuthContext'; // ✅
 
 const DownloadedTracks = () => {
   const [tracks, setTracks] = useState([]);
   const [loading, setLoading] = useState(true);
   const { currentTrack, playTrack, setQueue } = useContext(PlayerContext);
+  const { token } = useContext(AuthContext); // ✅
 
   const handleDelete = (spotifyId) => {
+    if (!token) return;
+
     fetch(`http://localhost:3000/api/downloaded/${spotifyId}`, {
       method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     })
       .then(res => {
         if (!res.ok) throw new Error('Failed to delete track');
@@ -20,49 +27,59 @@ const DownloadedTracks = () => {
   };
 
   const handlePlayTrack = (track) => {
-    // Set the full tracks array as queue and play the selected track
     setQueue(tracks);
     playTrack(track, tracks);
   };
 
+  useEffect(() => {
+    if (!token) return;
 
-useEffect(() => {
-  setLoading(true);
-  fetch('http://localhost:3000/api/downloaded')
-    .then(res => res.json())
-    .then(data => {
-      console.log('Raw tracks from API:', data);
-      const parsed = data.map(track => ({
-        ...track,
-        id: `${track.filename}-${Date.now()}`,
-        title: track.title || 'Unknown Title',
-        artist: track.artist || 'Unknown Artist',
-        cover: track.cover || '/default_cover.jpg',
-        album: track.album || 'Downloaded',
-        duration: typeof track.duration === 'string'
-          ? parseDurationString(track.duration)
-          : track.duration || 0,
-      }));
-      console.log('Parsed tracks:', parsed);
-      setTracks(parsed);
+    setLoading(true);
+    fetch('http://localhost:3000/api/downloaded', {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     })
-    .catch(console.error)
-    .finally(() => setLoading(false));
-}, []);
-
+      .then(res => res.json())
+      .then(data => {
+        const parsed = data.map(track => ({
+          ...track,
+          id: `${track.filename}-${Date.now()}`,
+          title: track.title || 'Unknown Title',
+          artist: track.artist || 'Unknown Artist',
+          cover: track.cover || '/default_cover.jpg',
+          album: track.album || 'Downloaded',
+          duration: typeof track.duration === 'string'
+            ? parseDurationString(track.duration)
+            : track.duration || 0,
+        }));
+        setTracks(parsed);
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, [token]);
 
   function parseDurationString(durationStr) {
     if (!durationStr || typeof durationStr !== 'string') return 0;
     const parts = durationStr.split(':').map(Number);
     if (parts.length === 2) {
-      // mm:ss format
       return parts[0] * 60 + parts[1];
     } else if (parts.length === 3) {
-      // hh:mm:ss format
       return parts[0] * 3600 + parts[1] * 60 + parts[2];
     }
     return 0;
   }
+
+  if (loading) {
+    return (
+      <div className="px-6 py-8">
+        <div className="animate-pulse">
+          {/* Skeleton UI */}
+        </div>
+      </div>
+    );
+  }
+
 
 
   if (loading) {

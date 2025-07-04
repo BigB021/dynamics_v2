@@ -1,19 +1,28 @@
-import React, { useEffect, useState, useContext } from 'react';
+import { useEffect, useState, useContext } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { PlayerContext } from '../context/PlayerContext';
+import { AuthContext } from '../context/AuthContext';
 import { ArrowLeft, Play, Music, Clock, User, Hash } from 'lucide-react';
 import TrackList from '../components/TrackList';
 
 const AlbumPage = () => {
-  const { spotify_id } = useParams(); // id = spotify album id now
+  const { spotify_id } = useParams();
   const [tracks, setTracks] = useState([]);
   const [albumInfo, setAlbumInfo] = useState(null);
   const navigate = useNavigate();
+  const { playTrack, setQueue } = useContext(PlayerContext);
+  const { token } = useContext(AuthContext); 
+  console.log("Route params:", useParams());
 
-  const { playTrack, setQueue, currentTrack } = useContext(PlayerContext);
 
   useEffect(() => {
-    fetch(`http://localhost:3000/api/albums/${encodeURIComponent(spotify_id)}`)
+    if (!token) return;
+
+    fetch(`http://localhost:3000/api/albums/${encodeURIComponent(spotify_id)}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
       .then(res => res.json())
       .then(data => {
         if (data.error) {
@@ -26,7 +35,7 @@ const AlbumPage = () => {
         setTracks(data.tracks || []);
       })
       .catch(console.error);
-  }, [spotify_id]);
+  }, [spotify_id, token]);
 
   const handlePlay = (track) => {
     setQueue(tracks);

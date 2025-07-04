@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useContext } from 'react';
 import axios from 'axios';
 import { Play, Download, Loader2 } from 'lucide-react';
 import { PlayerContext } from '../context/PlayerContext';
+import { AuthContext } from '../context/AuthContext';
 
 const extractSpotifyId = (url) => {
   const match = url.match(/track\/([a-zA-Z0-9]+)/);
@@ -18,14 +19,21 @@ const SearchResultItem = ({ track, onPlay }) => {
   const [fileUrl, setFileUrl] = useState('');
   const eventSourceRef = useRef(null);
   const { setCurrentTrack } = useContext(PlayerContext);
+  const { token } = useContext(AuthContext);
+
 
   const spotifyId = extractSpotifyId(track.url);
 
   useEffect(() => {
-    if (!spotifyId) return;
+    if (!spotifyId || !token) return; 
+    console.log("tokeeeen:"+token)
 
     axios
-      .get(`http://localhost:3000/api/download/check?spotifyId=${spotifyId}`)
+      .get(`http://localhost:3000/api/download/check?spotifyId=${spotifyId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
       .then((res) => {
         if (res.data.downloaded) {
           setDownloaded(true);
@@ -33,18 +41,30 @@ const SearchResultItem = ({ track, onPlay }) => {
         }
       })
       .catch(console.error);
-  }, [track.url, track.artist, track.name, spotifyId]);
+  }, [track.url, track.artist, track.name, spotifyId, token]);
+
 
   const handleDownload = async () => {
+    if (!token) {
+      alert('You must be logged in to download');
+      return;
+    }
     setIsDownloading(true);
     setProgressText('Starting download...');
 
     try {
-      const res = await axios.post('http://localhost:3000/api/download', { url: track.url });
-      const { taskId } = res.data;
+      const res = await axios.post('http://localhost:3000/api/download', 
+            { url: track.url },
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );      
+     const { taskId } = res.data;
 
       eventSourceRef.current = new EventSource(
-        `http://localhost:3000/api/download/progress/${taskId}`
+        `http://localhost:3000/api/download/progress/${taskId}?token=${token}`
       );
 
       eventSourceRef.current.onmessage = (event) => {

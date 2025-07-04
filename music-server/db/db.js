@@ -2,14 +2,26 @@ const Database = require('better-sqlite3');
 const path = require('path');
 const fs = require("fs");
 
-
 const db = new Database(path.resolve(__dirname, 'downloads.db'));
+db.pragma('foreign_keys = ON');
 
-// Downloads table (tracks)
+// === USERS ===
+db.prepare(`
+  CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT UNIQUE NOT NULL,
+    email TEXT UNIQUE,
+    password_hash TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )
+`).run();
+
+// === DOWNLOADS ===
 db.prepare(`
   CREATE TABLE IF NOT EXISTS downloads (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    spotify_id TEXT UNIQUE NOT NULL,
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    spotify_id TEXT NOT NULL UNIQUE,
     file_path TEXT NOT NULL,
     status TEXT NOT NULL,
     artist TEXT,
@@ -18,11 +30,12 @@ db.prepare(`
     duration INTEGER,
     release_date TEXT,
     cover TEXT,
-    downloaded_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    downloaded_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, spotify_id)
   )
 `).run();
 
-// Albums table
+// === ALBUMS ===
 db.prepare(`
   CREATE TABLE IF NOT EXISTS albums (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -35,17 +48,19 @@ db.prepare(`
   )
 `).run();
 
-// Playlists table
+// === PLAYLISTS ===
 db.prepare(`
   CREATE TABLE IF NOT EXISTS playlists (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT UNIQUE NOT NULL,
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    name TEXT NOT NULL,
     cover TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, name)
   )
 `).run();
 
-// Playlist ↔ Track relation table
+// === PLAYLIST TRACKS ===
 db.prepare(`
   CREATE TABLE IF NOT EXISTS playlist_tracks (
     playlist_id INTEGER NOT NULL,
@@ -56,11 +71,13 @@ db.prepare(`
   )
 `).run();
 
-// Favorites table
+// === FAVORITES ===
 db.prepare(`
   CREATE TABLE IF NOT EXISTS favorites (
-    spotify_id TEXT PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    spotify_id TEXT NOT NULL,
     added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY(user_id, spotify_id),
     FOREIGN KEY (spotify_id) REFERENCES downloads(spotify_id) ON DELETE CASCADE
   )
 `).run();
@@ -68,37 +85,54 @@ db.prepare(`
 module.exports = {
   db,
 
+  // === USERS ===
+  createUser(username, email, passwordHash) {
+    return db.prepare('INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)').run(username, email, passwordHash);
+  },
+
+  getUserByUsername(username) {
+    return db.prepare('SELECT * FROM users WHERE username = ?').get(username);
+  },
+
+  getUserById(userId) {
+    return db.prepare('SELECT * FROM users WHERE id = ?').get(userId);
+  },
+
   // === TRACKS ===
-  addDownload(spotifyId, filePath, status, artist = null, title = null, album = null, duration = null, releaseDate = null, cover = null) {
+  addDownload(userId, spotifyId, filePath, status, artist = null, title = null, album = null, duration = null, releaseDate = null, cover = null) {
     const stmt = db.prepare(`
       INSERT OR REPLACE INTO downloads 
-        (spotify_id, file_path, status, artist, title, album, duration, release_date, cover)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (user_id, spotify_id, file_path, status, artist, title, album, duration, release_date, cover)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
-    stmt.run(spotifyId, filePath, status, artist, title, album, duration, releaseDate, cover);
+    stmt.run(userId, spotifyId, filePath, status, artist, title, album, duration, releaseDate, cover);
   },
 
-  getDownloadBySpotifyId(spotifyId) {
-    return db.prepare('SELECT * FROM downloads WHERE spotify_id = ?').get(spotifyId);
+  getDownloadBySpotifyId(userId, spotifyId) {
+    return db.prepare('SELECT * FROM downloads WHERE user_id = ? AND spotify_id = ?').get(userId, spotifyId);
   },
 
-  deleteDownloadBySpotifyId(spotifyId) {
-    const deleteFav = db.prepare('DELETE FROM favorites WHERE spotify_id = ?');
-    deleteFav.run(spotifyId);
+  deleteDownloadBySpotifyId(userId, spotifyId) {
+    // Delete references in favorites (already done)
+    db.prepare('DELETE FROM favorites WHERE user_id = ? AND spotify_id = ?').run(userId, spotifyId);
 
-    return db.prepare('DELETE FROM downloads WHERE spotify_id = ?').run(spotifyId);
+    // Delete references in playlist_tracks
+    db.prepare('DELETE FROM playlist_tracks WHERE spotify_id = ?').run(spotifyId);
+
+    // Now delete from downloads
+    return db.prepare('DELETE FROM downloads WHERE user_id = ? AND spotify_id = ?').run(userId, spotifyId);
   },
 
-  getAllDownloads() {
-    return db.prepare('SELECT * FROM downloads WHERE status = ?').all('downloaded');
+  getAllDownloads(userId) {
+    return db.prepare('SELECT * FROM downloads WHERE user_id = ? AND status = ?').all(userId, 'downloaded');
   },
 
-  getDownloadsByAlbum(albumName) {
+  getDownloadsByAlbum(userId, albumName) {
     return db.prepare(`
       SELECT * FROM downloads 
-      WHERE album = ?
+      WHERE user_id = ? AND album = ?
       ORDER BY release_date DESC
-    `).all(albumName);
+    `).all(userId, albumName);
   },
 
   // === ALBUMS ===
@@ -113,12 +147,9 @@ module.exports = {
       INSERT INTO albums (spotify_id, name, artist, cover, release_date)
       VALUES (?, ?, ?, ?, ?)
     `).run(spotifyId, name, artist, cover, releaseDate);
-    console.log('DB addAlbum:', { name, artist, cover, releaseDate, spotifyId });
-
 
     return result.lastInsertRowid;
   },
-
 
   getAlbumByName(name) {
     return db.prepare(`SELECT * FROM albums WHERE name = ?`).get(name);
@@ -126,143 +157,111 @@ module.exports = {
 
   getAllAlbums() {
     return db.prepare(`
-      SELECT
-        spotify_id,
-        name,
-        artist,
-        cover,
-        release_date
+      SELECT spotify_id, name, artist, cover, release_date
       FROM albums
       ORDER BY id DESC
     `).all();
   },
 
-  // Get album info by spotify_id
   getAlbumBySpotifyId(spotifyId) {
-    return db.prepare(`
-      SELECT * FROM albums WHERE spotify_id = ?
-    `).get(spotifyId);
+    return db.prepare(`SELECT * FROM albums WHERE spotify_id = ?`).get(spotifyId);
   },
 
-  getTracksByAlbum(albumName) {
+  getTracksByAlbum(userId, albumName) {
     return db.prepare(`
       SELECT * FROM downloads
-      WHERE album = ?
+      WHERE user_id = ? AND album = ?
       ORDER BY downloaded_at ASC
-    `).all(albumName);
+    `).all(userId, albumName);
   },
 
-  deleteAlbumBySpotifyId(spotifyId) {
+  deleteAlbumBySpotifyId(userId, spotifyId) {
     const album = module.exports.getAlbumBySpotifyId(spotifyId);
     if (!album) return;
 
-    // Delete all tracks associated with this album
-    const tracks = module.exports.getTracksByAlbum(album.name);
-
-    const deleteTrack = db.prepare(`DELETE FROM downloads WHERE spotify_id = ?`);
-    const deleteFavorite = db.prepare(`DELETE FROM favorites WHERE spotify_id = ?`);
-    const deleteFromPlaylists = db.prepare(`DELETE FROM playlist_tracks WHERE spotify_id = ?`);
+    const tracks = module.exports.getTracksByAlbum(userId, album.name);
 
     for (const track of tracks) {
-      // Remove .mp3 file
       if (track.file_path && fs.existsSync(track.file_path)) {
         try {
           fs.unlinkSync(track.file_path);
-          console.log(`Deleted file: ${track.file_path}`);
         } catch (err) {
           console.warn(`Failed to delete file ${track.file_path}:`, err);
         }
       }
 
-      deleteFavorite.run(track.spotify_id);
-      deleteFromPlaylists.run(track.spotify_id);
-      deleteTrack.run(track.spotify_id);
+      db.prepare(`DELETE FROM favorites WHERE user_id = ? AND spotify_id = ?`).run(userId, track.spotify_id);
+      db.prepare(`DELETE FROM playlist_tracks WHERE spotify_id = ?`).run(track.spotify_id);
+      db.prepare(`DELETE FROM downloads WHERE user_id = ? AND spotify_id = ?`).run(userId, track.spotify_id);
     }
 
-    // Delete album cover file if exists
     if (album.cover) {
       const coverPath = path.resolve(__dirname, "../media", album.cover);
       if (fs.existsSync(coverPath)) {
         try {
           fs.unlinkSync(coverPath);
-          console.log(`Deleted cover: ${coverPath}`);
         } catch (err) {
           console.warn(`Failed to delete cover ${coverPath}:`, err);
         }
       }
     }
 
-    // Finally, delete album record
     return db.prepare(`DELETE FROM albums WHERE spotify_id = ?`).run(spotifyId);
   },
 
-
-  // Helper: get album by spotify_id and fetch tracks by album name
-  getAlbumAndTracksBySpotifyId(spotifyId) {
-    // Replace this.getAlbumBySpotifyId with db.getAlbumBySpotifyId
+  getAlbumAndTracksBySpotifyId(userId, spotifyId) {
     const album = module.exports.getAlbumBySpotifyId(spotifyId);
     if (!album) return null;
-
-    const tracks = module.exports.getTracksByAlbum(album.name);
+    const tracks = module.exports.getTracksByAlbum(userId, album.name);
     return { album, tracks };
   },
 
-
   // === PLAYLISTS ===
-  createPlaylist(name, cover = null) {
-    return db.prepare('INSERT INTO playlists (name, cover) VALUES (?, ?)').run(name, cover);
+  createPlaylist(userId, name, cover = null) {
+    return db.prepare('INSERT INTO playlists (user_id, name, cover) VALUES (?, ?, ?)').run(userId, name, cover);
   },
 
-  getAllPlaylists() {
-    return db.prepare('SELECT * FROM playlists ORDER BY created_at DESC').all();
+  getAllPlaylists(userId) {
+    return db.prepare('SELECT * FROM playlists WHERE user_id = ? ORDER BY created_at DESC').all(userId);
   },
 
-  getPlaylistById(id) {
+  getPlaylistById(userId, playlistId) {
     return db.prepare(`
       SELECT d.* FROM playlist_tracks pt
       JOIN downloads d ON pt.spotify_id = d.spotify_id
-      WHERE pt.playlist_id = ?
-    `).all(id);
+      JOIN playlists p ON pt.playlist_id = p.id
+      WHERE pt.playlist_id = ? AND p.user_id = ?
+    `).all(playlistId, userId);
   },
 
   addTrackToPlaylist(playlistId, spotifyId) {
-    return db.prepare(`
-      INSERT OR IGNORE INTO playlist_tracks (playlist_id, spotify_id)
-      VALUES (?, ?)
-    `).run(playlistId, spotifyId);
+    return db.prepare('INSERT OR IGNORE INTO playlist_tracks (playlist_id, spotify_id) VALUES (?, ?)').run(playlistId, spotifyId);
   },
 
   removeTrackFromPlaylist(playlistId, spotifyId) {
-    return db.prepare(`
-      DELETE FROM playlist_tracks 
-      WHERE playlist_id = ? AND spotify_id = ?
-    `).run(playlistId, spotifyId);
+    return db.prepare('DELETE FROM playlist_tracks WHERE playlist_id = ? AND spotify_id = ?').run(playlistId, spotifyId);
   },
+
   // === FAVORITES ===
-  addFavorite(spotifyId) {
-    return db.prepare('INSERT OR IGNORE INTO favorites (spotify_id) VALUES (?)').run(spotifyId);
+  addFavorite(userId, spotifyId) {
+    return db.prepare('INSERT OR IGNORE INTO favorites (user_id, spotify_id) VALUES (?, ?)').run(userId, spotifyId);
   },
 
-  removeFavorite(spotifyId) {
-    return db.prepare('DELETE FROM favorites WHERE spotify_id = ?').run(spotifyId);
+  removeFavorite(userId, spotifyId) {
+    return db.prepare('DELETE FROM favorites WHERE user_id = ? AND spotify_id = ?').run(userId, spotifyId);
   },
 
-  isFavorite(spotifyId) {
-    return db.prepare('SELECT 1 FROM favorites WHERE spotify_id = ?').get(spotifyId);
+  isFavorite(userId, spotifyId) {
+    return db.prepare('SELECT 1 FROM favorites WHERE user_id = ? AND spotify_id = ?').get(userId, spotifyId);
   },
 
-  getAllFavorites() {
+  getAllFavorites(userId) {
     return db.prepare(`
-      SELECT 
-        d.*,
-        f.added_at as favorited_at
+      SELECT d.*, f.added_at as favorited_at
       FROM favorites f
-      JOIN downloads d ON d.spotify_id = f.spotify_id
-      WHERE d.status = 'downloaded'
+      JOIN downloads d ON d.spotify_id = f.spotify_id AND d.user_id = f.user_id
+      WHERE f.user_id = ? AND d.status = 'downloaded'
       ORDER BY f.added_at DESC
-    `).all();
+    `).all(userId);
   },
-
-  // Fetch Artists
-
 };

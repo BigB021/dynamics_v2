@@ -11,6 +11,8 @@ const albumRoutes = require('./routes/albums');
 const favoriteRoutes = require('./routes/favorites');
 const homeRoute = require('./routes/home');
 const previewedAlbumsRoute = require('./routes/previewedAlbums.js');
+const { router: authRoutes } = require('./routes/auth');
+
 
 
 dotenv.config();
@@ -25,6 +27,8 @@ app.use(cors({
 }));
 
 app.use(express.json());
+
+
 app.use('/api/search', searchRoutes);
 app.use('/api/download', downloadRoutes);
 app.use('/api/downloaded', downloadedRoutes);
@@ -33,10 +37,15 @@ app.use('/api/albums', albumRoutes);
 app.use('/api/favorites', favoriteRoutes);
 app.use('/api/home', homeRoute);
 app.use('/api/preview/album', previewedAlbumsRoute);
-
-
+app.use('/api/auth', authRoutes); 
 
 //app.use('/media', express.static(path.resolve(__dirname, 'media')));
 app.use('/media', express.static(mediaDir));
 
 app.listen(PORT, () => console.log(`🎵 Server running on http://localhost:${PORT}`));
+
+
+app.use((err, req, res, next) => {
+  console.error('Unhandled error:', err);
+  res.status(500).json({ error: 'Internal Server Error' });
+});

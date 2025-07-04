@@ -7,11 +7,13 @@ const router = express.Router();
 const mediaBaseUrl = 'http://localhost:3000/media/';
 const mediaBaseDir = path.resolve(__dirname, '..', 'media');
 
+const { authenticateToken } = require('./auth');
+router.use(authenticateToken);
 
 router.get('/', (req, res) => {
   try {
     // Fetch all downloaded tracks from DB
-    const downloads = getAllDownloads();
+    const downloads = getAllDownloads(req.userId);
 
     const tracks = downloads.map(track => ({
       spotify_id:track.spotify_id,
@@ -35,7 +37,7 @@ router.get('/', (req, res) => {
 router.delete('/:spotifyId', (req, res) => {
   const { spotifyId } = req.params;
   try {
-    const track = getDownloadBySpotifyId(spotifyId);
+    const track = getDownloadBySpotifyId(req.userId,spotifyId);
     console.log("deleting track id "+spotifyId)
     if (!track) return res.status(404).json({ error: 'Track not found' });
 
@@ -52,7 +54,7 @@ router.delete('/:spotifyId', (req, res) => {
       }
     }
 
-    deleteDownloadBySpotifyId(spotifyId);
+    deleteDownloadBySpotifyId(req.userId,spotifyId);
     res.status(200).json({ message: 'Track deleted successfully' });
   } catch (err) {
     console.error('Error deleting track:', err);

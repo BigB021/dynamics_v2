@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { PlayerContext } from '../context/PlayerContext';
 import { ArrowLeft, Play, Music, Clock, User, Hash } from 'lucide-react';
 import TrackList from '../components/TrackList';
+import { authFetch } from '../utils/authFetch';
 
 const PlaylistDetail = () => {
   const { id } = useParams();
@@ -13,27 +14,28 @@ const PlaylistDetail = () => {
   const { playTrack, setQueue, currentTrack } = useContext(PlayerContext);
 
   useEffect(() => {
-    fetch(`http://localhost:3000/api/playlists/${id}`)
-      .then(res => res.json())
-      .then(data => {
-        const { playlist, tracks } = data;
-        const enriched = tracks
-          .filter(track => track.file_path)
-          .map(track => ({
-            ...track,
-            url: `http://localhost:3000/media/${track.file_path.split('/').pop()}`,
-            cover: track.cover ? `http://localhost:3000/media/${track.cover}` : null,
-          }));
-
-        setTracks(enriched);
-        setPlaylistInfo({
-          name: playlist.name || 'Untitled Playlist',
-          cover: playlist.cover,
-          trackCount: enriched.length,
-        });
-      })
-      .catch(console.error);
-  }, [id]);
+      authFetch(`http://localhost:3000/api/playlists/${id}`)
+        .then(res => res.json())
+        .then(data => {
+          const { playlist, tracks } = data;
+          const enriched = tracks
+            .filter(track => track.file_path)
+            .map(track => ({
+              ...track,
+              url: `http://localhost:3000/media/${track.file_path.split('/').pop()}`,
+              cover: track.cover ? `http://localhost:3000/media/${track.cover}` : null,
+            }));
+        
+          setTracks(enriched);
+          setPlaylistInfo({
+            name: playlist.name || 'Untitled Playlist',
+            cover: playlist.cover,
+            trackCount: enriched.length,
+          });
+        })
+        .catch(console.error);
+    }, [id]);
+    
 
   const handlePlay = (track) => {
     setQueue(tracks);

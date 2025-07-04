@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Upload, Music, Sparkles } from 'lucide-react';
+import { AuthContext } from '../context/AuthContext';
 
 const CreatePlaylist = () => {
   const [name, setName] = useState('');
@@ -8,28 +9,46 @@ const CreatePlaylist = () => {
   const [error, setError] = useState('');
   const [dragActive, setDragActive] = useState(false);
   const navigate = useNavigate();
+  const { user, token } = useContext(AuthContext);
+
+  React.useEffect(() => {
+    if (!user) {
+      navigate('/login'); // or show a message
+    }
+  }, [user, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
-    const formData = new FormData();
-    formData.append('name', name);
-    if (cover) formData.append('cover', cover);
-
-    try {
-      const res = await fetch('http://localhost:3000/api/playlists', {
-        method: 'POST',
-        body: formData,
-      });
-      if (!res.ok) throw new Error('Failed to create playlist');
-      const playlist = await res.json();
-      navigate(`/playlist/${playlist.id}`);
-    } catch (err) {
-      setError('Playlist name must be unique or server error');
-      console.error(err);
+    if (!user) {
+      setError('You must be logged in to create a playlist.');
+      return;
     }
-  };
+
+    const formData = new FormData();
+      formData.append('name', name);
+      if (cover) formData.append('cover', cover);
+    
+      try {
+        const res = await fetch('http://localhost:3000/api/playlists', {
+          method: 'POST',
+          headers: {
+            // If your backend expects auth token in header:
+            Authorization: `Bearer ${token}`, 
+            // Don't set Content-Type here, browser sets it automatically with FormData
+          },
+          body: formData,
+        });
+        if (!res.ok) throw new Error('Failed to create playlist');
+        const playlist = await res.json();
+        navigate(`/playlist/${playlist.id}`);
+      } catch (err) {
+        setError('Playlist name must be unique or server error');
+        console.error(err);
+      }
+    };
+  
 
   const handleDrag = (e) => {
     e.preventDefault();

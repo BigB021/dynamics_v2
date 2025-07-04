@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useContext } from 'react';
 import axios from 'axios';
 import { Play, Download, Heart, Loader2 } from 'lucide-react';
 import { PlayerContext } from '../context/PlayerContext';
+import { AuthContext } from '../context/AuthContext';
 
 const extractSpotifyId = (url) => {
   const match = url?.match(/track\/([a-zA-Z0-9]+)/);
@@ -17,6 +18,8 @@ const TrackRow = ({ track, queue, showIndex = false, index = 0 }) => {
   const [downloaded, setDownloaded] = useState(false);
   const [fileUrl, setFileUrl] = useState('');
   const eventSourceRef = useRef(null);
+  const { token } = useContext(AuthContext);
+
 
   const {
     playTrack,
@@ -34,7 +37,11 @@ const TrackRow = ({ track, queue, showIndex = false, index = 0 }) => {
     if (!spotifyId) return;
 
     axios
-      .get(`http://localhost:3000/api/download/check?spotifyId=${spotifyId}`)
+      .get(`http://localhost:3000/api/download/check?spotifyId=${spotifyId}`,{
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+      })
       .then((res) => {
         if (res.data.downloaded) {
           const url = `http://localhost:3000/media/${encodeURIComponent(res.data.filePath)}`;
@@ -43,7 +50,7 @@ const TrackRow = ({ track, queue, showIndex = false, index = 0 }) => {
         }
       })
       .catch(console.error);
-  }, [spotifyId]);
+  }, [spotifyId,token]);
 
   const handleDownload = async () => {
     console.log('Downloading track:', track);
@@ -57,9 +64,14 @@ const TrackRow = ({ track, queue, showIndex = false, index = 0 }) => {
     setProgressText('Starting download...');
 
     try {
-      const res = await axios.post('http://localhost:3000/api/download', {
-        url: track.url,
-      });
+      const res = await axios.post('http://localhost:3000/api/download', 
+        {url: track.url},
+        {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        }
+    );
       const { taskId } = res.data;
 
       eventSourceRef.current = new EventSource(

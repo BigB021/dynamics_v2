@@ -1,37 +1,36 @@
 const express = require('express');
 const path = require('path');
-const { db, addFavorite, removeFavorite, isFavorite, getAllFavorites } = require('../db/db');
+const {
+  addFavorite,
+  removeFavorite,
+  isFavorite,
+  getAllFavorites
+} = require('../db/db');
+const { authenticateToken } = require('./auth');
 const router = express.Router();
 
-// Use the same media base URL as your downloaded tracks
+router.use(authenticateToken); // protect all routes
+
 const mediaBaseUrl = 'http://localhost:3000/media/';
 
 // GET /api/favorites
 router.get('/', (req, res) => {
   try {
-    const favorites = getAllFavorites();
-    
-    // Transform each favorite to match the same format as downloaded tracks
+    const favorites = getAllFavorites(req.userId); // Pass user ID!
+
     const favoritesWithUrls = favorites.map(track => ({
       ...track,
-      // Use the same filename extraction pattern as downloaded tracks
       filename: track.file_path ? path.basename(track.file_path) : null,
-      // Use the same URL pattern as downloaded tracks
       url: track.file_path ? mediaBaseUrl + encodeURIComponent(path.basename(track.file_path)) : null,
-      // Format cover URL the same way as downloaded tracks
-      cover: track.cover ? (
-        track.cover.startsWith('http') 
-          ? track.cover 
-          : mediaBaseUrl + encodeURIComponent(track.cover)
-      ) : '/default_cover.jpeg',
-      // Ensure consistent field names
-      title: track.title ,
-      artist: track.artist ,
-      album: track.album ,
-      duration: track.duration 
+      cover: track.cover?.startsWith('http')
+        ? track.cover
+        : mediaBaseUrl + encodeURIComponent(track.cover || 'default_cover.jpeg'),
+      title: track.title,
+      artist: track.artist,
+      album: track.album,
+      duration: track.duration
     }));
-    
-    console.log('Favorites with URLs:', favoritesWithUrls); // Debug log
+
     res.json(favoritesWithUrls);
   } catch (err) {
     console.error('Error fetching favorites:', err);
@@ -43,7 +42,7 @@ router.get('/', (req, res) => {
 router.post('/', (req, res) => {
   const { spotifyId } = req.body;
   try {
-    addFavorite(spotifyId);
+    addFavorite(req.userId, spotifyId); // ✅ use userId
     res.status(201).json({ message: 'Added to favorites' });
   } catch (err) {
     console.error('Error adding favorite:', err);
@@ -55,7 +54,7 @@ router.post('/', (req, res) => {
 router.delete('/:spotifyId', (req, res) => {
   const { spotifyId } = req.params;
   try {
-    removeFavorite(spotifyId);
+    removeFavorite(req.userId, spotifyId); // ✅ use userId
     res.json({ message: 'Removed from favorites' });
   } catch (err) {
     console.error('Error removing favorite:', err);
@@ -66,7 +65,7 @@ router.delete('/:spotifyId', (req, res) => {
 // GET /api/favorites/:spotifyId
 router.get('/:spotifyId', (req, res) => {
   try {
-    const result = isFavorite(req.params.spotifyId);
+    const result = isFavorite(req.userId, req.params.spotifyId); // ✅ use userId
     res.json({ isFavorite: !!result });
   } catch (err) {
     console.error('Error checking favorite status:', err);

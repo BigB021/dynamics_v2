@@ -1,8 +1,12 @@
 const express = require('express');
 const fetch = require('node-fetch');
 const { getSpotifyAccessToken } = require('../spotify/tokenManager');
+const { authenticateToken } = require('./auth');
+
 
 const router = express.Router();
+router.use(authenticateToken); // protect all routes
+
 
 router.get('/:spotify_id', async (req, res) => {
   const spotifyId = req.params.spotify_id;
