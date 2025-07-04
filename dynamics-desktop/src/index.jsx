@@ -10,13 +10,14 @@ import './index.css';
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <AuthProvider>
-      <BrowserRouter>
-        <PlayerProvider>
-          <FavoritesProvider>
-            <App />
-          </FavoritesProvider>
-        </PlayerProvider>
-      </BrowserRouter>
+      <FavoritesProvider>
+        <BrowserRouter>
+          <PlayerProvider>
+              <App />
+          </PlayerProvider>
+        </BrowserRouter>
+      </FavoritesProvider>
+
     </AuthProvider>
   </React.StrictMode>
 );

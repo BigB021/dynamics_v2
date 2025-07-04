@@ -3,31 +3,22 @@ import { Play, Pause, MoreVertical, Heart, Plus } from 'lucide-react';
 import { PlayerContext } from '../context/PlayerContext';
 import { authFetch } from '../utils/authFetch';
 import { AuthContext } from '../context/AuthContext';
+import { FavoritesContext } from '../context/FavoritesContext';
 
 const TrackListItem = ({ track, onDelete, onPlay, index }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [playlists, setPlaylists] = useState([]);
   const [playlistMenuOpen, setPlaylistMenuOpen] = useState(false);
-  const [isLiked, setIsLiked] = useState(false);
   const menuRef = useRef();
 
   const { setCurrentTrack, setQueue, currentTrack, setShouldAutoPlay, playTrack, isPlaying } = useContext(PlayerContext);
   const { token } = useContext(AuthContext);
+  const { isFavorite, toggleFavorite } = useContext(FavoritesContext);
+  const isLiked = isFavorite(track.spotify_id);
 
 
-  useEffect(() => {
-    if (!token) {
-      setIsLiked(false);
-      return;
-    }
-    authFetch(`http://localhost:3000/api/favorites/${track.spotify_id}`)
-      .then(res => {
-        if (!res.ok) throw new Error('Unauthorized');
-        return res.json();
-      })
-      .then(data => setIsLiked(data.isFavorite))
-      .catch(() => setIsLiked(false));
-  }, [track.spotify_id, token]);
+
+  
 
   const fetchPlaylists = async () => {
     if (!token) return alert("You must be logged in");
@@ -73,41 +64,13 @@ const TrackListItem = ({ track, onDelete, onPlay, index }) => {
     }
   };
 
-  const handleLikeToggle = (e) => {
+  const handleLikeToggle = async (e) => {
     e.stopPropagation();
-    
-    if (isLiked) {
-      // Remove favorite
-      authFetch(`http://localhost:3000/api/favorites/${track.spotify_id}`, {
-        method: 'DELETE',
-      })
-      .then(res => {
-        if (!res.ok) throw new Error('Failed to remove favorite');
-        setIsLiked(false);
-      })
-      .catch(err => {
-        alert('Error removing from favorites');
-        console.error(err);
-      });
-    } else {
-      // Add favorite
-      authFetch(`http://localhost:3000/api/favorites`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ spotifyId: track.spotify_id }),
-      })
-      .then(res => {
-        if (!res.ok) throw new Error('Failed to add favorite');
-        setIsLiked(true);
-      })
-      .catch(err => {
-        alert('Error adding to favorites');
-        console.error(err);
-      });
+    const success = await toggleFavorite(track.spotify_id, track);
+    if (!success) {
+      alert('Failed to toggle favorite');
     }
   };
-  
-
 
   const formatDuration = (seconds) => {
     if (!seconds || isNaN(seconds)) return '--:--';
@@ -193,7 +156,11 @@ const TrackListItem = ({ track, onDelete, onPlay, index }) => {
             isLiked ? 'text-red-500' : 'text-gray-400 dark:text-gray-500'
           }`}
         >
-          <Heart size={16} fill={isLiked ? 'currentColor' : 'none'} />
+          <Heart
+            size={16}
+            fill={isLiked ? 'currentColor' : 'none'}
+            strokeWidth={isLiked ? 0 : 2}
+          />
         </button>
 
         {/* More Options */}
