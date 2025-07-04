@@ -16,6 +16,7 @@ import Register from './components/Rgister';
 import { AuthContext } from './context/AuthContext';
 import Profile from './components/Profile';
 import Layout from './components/Layout';
+import HomeWrapper from './components/HomeWrapper';
 
 function App() {
   const [query, setQuery] = useState('');
@@ -27,7 +28,7 @@ function App() {
         <Layout>
           <Header query={query} setQuery={setQuery} />
           <Routes>
-            <Route path="/" element={<HomePage />} />
+            <Route path="/" element={<HomeWrapper />} />
             <Route path="/downloads" element={<DownloadedTracks />} />
             <Route path="/playlists" element={<PlaylistPage />} />
             <Route path="/playlist/:id" element={<PlaylistDetail />} />
