@@ -7,6 +7,7 @@ import TrackList from '../components/TrackList';
 export default function Favorites() {
   const { favorites, toggleFavorite } = useContext(FavoritesContext);
   const { playTrack, setQueue } = useContext(PlayerContext);
+  
 
   useEffect(() => {
     console.log('[Favorites Page] Rendered with', favorites.length, 'favorite tracks');

@@ -20,9 +20,6 @@ const TrackRow = ({ track, queue, showIndex = false, index = 0 }) => {
   const [fileUrl, setFileUrl] = useState('');
   const eventSourceRef = useRef(null);
   const { token } = useContext(AuthContext);
-  const { isFavorite, toggleFavorite } = useContext(FavoritesContext);
-  const liked = isFavorite(track.spotify_id);
-
 
   const {
     playTrack,
@@ -31,18 +28,24 @@ const TrackRow = ({ track, queue, showIndex = false, index = 0 }) => {
     isPlaying,
   } = useContext(PlayerContext);
 
-  const isCurrentTrack = currentTrack?.id === track.id;
+  const generateTrackId = (track) => track.spotify_id || extractSpotifyId(track.url) || `${track.artist}-${track.title}`;
+  const isCurrentTrack = currentTrack?.trackId === generateTrackId(track);
   const isCurrentlyPlaying = isCurrentTrack && isPlaying;
 
   const spotifyId = extractSpotifyId(track.url) || track.spotify_id;
+  const { favorites, isFavorite, toggleFavorite } = useContext(FavoritesContext);
+  
+  const liked = isFavorite(spotifyId);
+
+
 
   useEffect(() => {
     if (!spotifyId) return;
 
     axios
-      .get(`http://localhost:3000/api/download/check?spotifyId=${spotifyId}`,{
+      .get(`http://localhost:3000/api/download/check?spotifyId=${spotifyId}`, {
         headers: {
-            Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
       })
       .then((res) => {
@@ -53,11 +56,9 @@ const TrackRow = ({ track, queue, showIndex = false, index = 0 }) => {
         }
       })
       .catch(console.error);
-  }, [spotifyId,token]);
+  }, [spotifyId, token]);
 
   const handleDownload = async () => {
-    console.log('Downloading track:', track);
-    console.log('Downloading track url:', track.url);
     if (!track.url) {
       alert('Track URL is undefined, cannot download');
       return;
@@ -67,14 +68,11 @@ const TrackRow = ({ track, queue, showIndex = false, index = 0 }) => {
     setProgressText('Starting download...');
 
     try {
-      const res = await axios.post('http://localhost:3000/api/download', 
-        {url: track.url},
-        {
-            headers: {
-                Authorization: `Bearer ${token}`
-            }
-        }
-    );
+      const res = await axios.post('http://localhost:3000/api/download',
+        { url: track.url },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
       const { taskId } = res.data;
 
       eventSourceRef.current = new EventSource(
@@ -122,6 +120,14 @@ const TrackRow = ({ track, queue, showIndex = false, index = 0 }) => {
     return `${m}:${s.toString().padStart(2, '0')}`;
   };
 
+  const handleToggleFavorite = async () => {
+    const success = await toggleFavorite(spotifyId, track);
+
+    if (!success) {
+      console.warn('Failed to toggle favorite for track:', track.title);
+    }
+  };
+
   return (
     <div
       className={`flex items-center gap-4 p-4 rounded-xl group transition-all overflow-hidden ${
@@ -146,35 +152,47 @@ const TrackRow = ({ track, queue, showIndex = false, index = 0 }) => {
       </div>
 
       <div className="flex items-center gap-2 flex-shrink-0">
-      {downloaded ? (
-        <button
-          onClick={handlePlay}
-          className={`w-9 h-9 flex items-center justify-center rounded-full transition ${
-            isCurrentlyPlaying ? 'bg-green-500 text-white' : 'bg-indigo-500 text-white'
-          }`}
-          title="Play"
-        >
-          <Play size={16} fill="currentColor" />
-        </button>
-      ) : isDownloading ? (
-        <div
-          className="text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full flex items-center gap-2 animate-pulse"
-          title={progressText}
-        >
-          <Loader2 size={14} className="animate-spin" />
-          {progressText}
-        </div>
-      ) : (
-        <button
-          onClick={handleDownload}
-          className="flex items-center gap-1 px-3 py-1.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white rounded-full"
-          title="Download"
-        >
-          <Download size={14} />
-        </button>
-      )}
-    </div>
+        {downloaded ? (
+          <button
+            onClick={handlePlay}
+            className={`w-9 h-9 flex items-center justify-center rounded-full transition ${
+              isCurrentlyPlaying ? 'bg-green-500 text-white' : 'bg-indigo-500 text-white'
+            }`}
+            title="Play"
+          >
+            <Play size={16} fill="currentColor" />
+          </button>
+        ) : isDownloading ? (
+          <div
+            className="text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full flex items-center gap-2 animate-pulse"
+            title={progressText}
+          >
+            <Loader2 size={14} className="animate-spin" />
+            {progressText}
+          </div>
+        ) : (
+          <button
+            onClick={handleDownload}
+            className="flex items-center gap-1 px-3 py-1.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white rounded-full"
+            title="Download"
+          >
+            <Download size={14} />
+          </button>
+        )}
 
+        {/* ❤️ Like button */}
+        <button
+          onClick={handleToggleFavorite}
+          className="text-pink-500 hover:text-pink-600"
+          title={liked ? 'Remove from favorites' : 'Add to favorites'}
+        >
+          <Heart
+            className="w-5 h-5"
+            strokeWidth={liked ? 0 : 2}
+            fill={liked ? 'currentColor' : 'none'}
+          />
+        </button>
+      </div>
     </div>
   );
 };

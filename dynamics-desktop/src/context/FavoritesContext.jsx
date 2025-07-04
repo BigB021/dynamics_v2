@@ -1,6 +1,6 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
-import { AuthContext } from './AuthContext';
+import { createContext, useState, useEffect, useContext } from 'react';
 import { getFavorites, toggleFavorite as apiToggleFavorite } from '../utils/favoritesAPI';
+import { AuthContext } from './AuthContext';
 
 export const FavoritesContext = createContext();
 
@@ -9,47 +9,48 @@ export const FavoritesProvider = ({ children }) => {
   const [favorites, setFavorites] = useState([]);
 
   useEffect(() => {
-    if (token) {
-      getFavorites(token).then(setFavorites).catch(err => {
-        console.error('[FavoritesContext] Failed to fetch favorites:', err);
-      });
-    } else {
-      setFavorites([]);
-    }
+    if (!token) return;
+    fetchFavorites();
   }, [token]);
 
-  const isFavorite = (spotifyId) =>
-    favorites.some((track) => track.spotify_id === spotifyId);
-
-  const toggleFavorite = async (spotifyId, trackData = null) => {
-  const currentlyFavorite = isFavorite(spotifyId);
-  const success = await apiToggleFavorite(spotifyId, currentlyFavorite, token);
-
-  if (!success) return false;
-
-  setFavorites((prev) => {
-    if (currentlyFavorite) {
-      return prev.filter((t) => t.spotify_id !== spotifyId);
-    } else {
-      if (!trackData) {
-        console.warn('Missing track data for new favorite:', spotifyId);
-        return prev;
-      }
-      // Prevent duplicates
-      const alreadyExists = prev.some(t => t.spotify_id === spotifyId);
-      if (alreadyExists) return prev;
-      return [...prev, trackData];
+  const fetchFavorites = async () => {
+    try {
+      const favs = await getFavorites(token);
+      setFavorites(favs);
+    } catch (err) {
+      console.error('Failed to load favorites:', err);
     }
-  });
+  };
 
-  return true;
-};
+  const isFavorite = (spotifyId) => {
+    return favorites.some((t) => t.spotify_id === spotifyId);
+  };
 
+  const toggleFavorite = async (spotifyId, track = null) => {
+    const liked = isFavorite(spotifyId);
+    const success = await apiToggleFavorite(spotifyId, liked, token);
+    if (!success) return false;
+
+    setFavorites((prev) => {
+      if (liked) {
+        // Remove by ID — new array
+        return prev.filter((t) => t.spotify_id !== spotifyId);
+      } else {
+        if (!track) return prev; // Safety
+        // Avoid duplicate ID in case track already exists
+        const withoutDuplicate = prev.filter((t) => t.spotify_id !== spotifyId);
+        return [...withoutDuplicate, track];
+      }
+    });
+
+    return true;
+  };
+
+  const refreshFavorites = fetchFavorites;
 
   return (
-    <FavoritesContext.Provider value={{ favorites, isFavorite, toggleFavorite }}>
+    <FavoritesContext.Provider value={{ favorites, isFavorite, toggleFavorite, refreshFavorites }}>
       {children}
     </FavoritesContext.Provider>
   );
 };
-

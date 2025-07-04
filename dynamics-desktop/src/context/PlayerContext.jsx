@@ -94,12 +94,15 @@ const playNext = useCallback(({ shuffle = false } = {}) => {
     };
   }, []);
 
+  const generateTrackId = (track) => track.spotify_id || extractSpotifyId(track.url) || `${track.artist}-${track.title}`;
+
   const playTrack = (track, queue = [track]) => {
     setCurrentTrack(null);
     setTimeout(() => {
+      const trackId = generateTrackId(track);
       setQueue(queue);
       setShouldAutoPlay(true);
-      setCurrentTrack({ ...track });
+      setCurrentTrack({ ...track,trackId });
     }, 50);
   };
 
