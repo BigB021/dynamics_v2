@@ -23,7 +23,7 @@ function App() {
   const { user } = useContext(AuthContext);
 
   return (
-    <div className="min-h-screen flex bg-gradient-to-b from-slate-50 via-blue-50 to-indigo-100 dark:from-zinc-900 dark:via-zinc-900 dark:to-indigo-950 text-neutral-900 dark:text-white">
+    <div className="min-h-screen flex flex-col overflow-hidden bg-gradient-to-b from-slate-50 via-blue-50 to-indigo-100 dark:from-zinc-900 dark:via-zinc-900 dark:to-indigo-950 text-neutral-900 dark:text-white">
       <div className="flex-1">
         <Layout>
           <Header query={query} setQuery={setQuery} />
