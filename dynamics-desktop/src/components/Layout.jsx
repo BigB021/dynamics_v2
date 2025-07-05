@@ -8,20 +8,23 @@ const Layout = ({ children }) => {
 
   const sidebarWidth = isExpanded ? 224 : 80;
 
-  return (
-    <div className="flex">
-      {user && <VerticalNavbar onToggle={setIsExpanded} />}
-
-      <main
-        className="transition-all duration-300 w-full"
-        style={{
-          marginLeft: user ? sidebarWidth : 0,
-        }}
-      >
+return (
+  <div className="flex w-full min-h-screen overflow-hidden">
+    {user && <VerticalNavbar onToggle={setIsExpanded} />}
+    
+    <main
+      className="transition-all duration-300 flex-1 overflow-auto"
+      style={{
+        marginLeft: user ? sidebarWidth : 0,
+      }}
+    >
+      <div className="max-w-full  ">
         {children}
-      </main>
-    </div>
-  );
+      </div>
+    </main>
+    </ div>
+    
+    );
 };
 
 export default Layout;

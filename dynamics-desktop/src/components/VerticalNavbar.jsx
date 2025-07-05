@@ -97,7 +97,7 @@ const VerticalNavbar = ({ onToggle }) => {
       className={`fixed top-0 left-0 ${
         expanded ? 'w-56' : 'w-20'
       } bg-slate-900/20 dark:bg-slate-900/40 backdrop-blur-xl border-r border-white/10 dark:border-white/5 z-40 px-4 py-6 flex flex-col transition-all duration-300 shadow-2xl`}
-      style={{ height: 'calc(100vh - 50px)' }}
+      style={{ height: '100vh' }}
     >
       {/* Decorative Background Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -106,7 +106,7 @@ const VerticalNavbar = ({ onToggle }) => {
       </div>
 
       {/* Content Container with proper flex layout */}
-      <div className="relative z-10 flex flex-col h-full">
+      <div className="relative z-10 flex flex-col h-full pb-40 ">
         {/* Top Section */}
         <div className="flex-none space-y-6">
           {/* Logo */}

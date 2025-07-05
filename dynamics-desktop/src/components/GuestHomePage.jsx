@@ -67,7 +67,7 @@ const GuestHomePage = () => {
         </p>
         <button
           onClick={() => navigate('/login')}
-          className="mt-10 items-center gap-2 px-4 sm:px-6 py-3 bg-rose-900 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl hover:shadow-purple-500/25 hover:bg-rose-700 transition-all duration-300 transform hover:scale-105 "
+          className="mt-10 items-center gap-2 px-4 sm:px-6 py-3 text-white bg-rose-500 dark:bg-rose-900 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl hover:shadow-purple-500/25 hover:bg-rose-700 transition-all duration-300 transform hover:scale-105 "
         >
           Log In
         </button>
