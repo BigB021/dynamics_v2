@@ -1,70 +1,106 @@
-# Getting Started with Create React App
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+# 🎵 Dynamics Desktop
 
-## Available Scripts
+> A cross-platform, Spotify-powered music streaming and downloading app.
+> Built with React, Electron, and SpotDL. (Build just for linux currently)
 
-In the project directory, you can run:
+---
 
-### `npm start`
+## 📦 Features
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+- 🔎 Search Spotify tracks, albums, and playlists
+- 🎧 Stream and download music locally in `MP3` format (192kbps)
+- 💾 Offline support with metadata (artist, album, cover)
+- 📚 Favorites, playlists, user stats
+- 🌙 Dark/light mode with elegant UI
+- 🧠 Uses `SpotDL` under the hood for music downloads
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+---
 
-### `npm test`
+## 🖥️ Tech Stack
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+| Layer     | Stack                                                              |
+| --------- | ------------------------------------------------------------------ |
+| Frontend  | React + Vite + TailwindCSS                                         |
+| Backend   | Node.js + Express + SQLite                                         |
+| Electron  | Desktop shell for Linux & Windows                                  |
+| Downloads | [SpotDL](https://github.com/spotDL/spotify-downloader) in Python venv |
+| Database  | SQLite (`downloads.db`)                                          |
 
-### `npm run build`
+---
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## 🛠️ Prerequisites
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+Before building and running the app:
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+### 1. Install system dependencies:
 
-### `npm run eject`
+```bash
+sudo apt install nodejs npm python3 python3-venv
+```
+### 2. Clone the repository
+```bash
+cd ~
+git clone https://github.com/BigB021/dynamics-desktop.git
+cd dynamics-desktop
+```
+### 3. Create dynamics workspace directory
+```bash
+mkdir -p ~/dynamics/media
+```
+###  4. Install SpotDL in Python venv
+```bash
+cd music-server
+python3 -m venv venv
+source venv/bin/activate
+pip install spotdl
+deactivate
+cd ..
+```
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+## 🚀 Build for Linux
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+```bash
+./build.sh
+```
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+### This will:
+- Clean previous builds
+- Install backend dependencies
+- Build frontend via Vite
+- Package the app via electron-builder
+- Generate a .AppImage in release/
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+### Output:
 
-## Learn More
+release/Dynamics-0.1.0.AppImage
+- Double-click or run it via:
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+```bash
+./release/Dynamics-0.1.0.AppImage
+```
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## 💻 Run in Dev Mode (3 terminals)
 
-### Code Splitting
+1. Backend:
+```bash
+npm run dev
+```
+2. Frontend (Vite):
+```bash
+npm start
+```
+3. Electron desktop app:
+```bash
+ELECTRON_DEV=true npx electron .
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+## 🧪 Debug Tips
+Logs in console show SpotDL progress and backend calls.
 
-### Analyzing the Bundle Size
+If download fails: ensure your Spotify credentials are valid and SpotDL works manually.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+Check the downloaded MP3s inside ~/dynamics/media.
 
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+## 🤝 Contributing
+Pull requests are welcome! Please fork the repo and submit a PR.
