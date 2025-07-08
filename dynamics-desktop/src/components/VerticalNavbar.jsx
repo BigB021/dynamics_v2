@@ -136,7 +136,7 @@ const VerticalNavbar = ({ onToggle }) => {
           </nav>
 
           {/* Theme Toggle */}
-          <div className="flex justify-center mb-5">
+          <div className="flex justify-center ">
             <IconButton
               icon={darkMode ? <Sun size={22} className="text-yellow-400" /> : <Moon size={22} className="text-indigo-400" />}
               title="Toggle Theme"
@@ -146,7 +146,7 @@ const VerticalNavbar = ({ onToggle }) => {
         </div>
 
         {/* Spacer to push bottom section down */}
-        <div className="flex-1 min-h-0"></div>
+        <div className="flex-1 min-h-0 mt-10"></div>
 
         {/* Bottom Section - Fixed spacing from bottom */}
         <div className="flex-none space-y-4 pb-4">
@@ -188,7 +188,7 @@ const VerticalNavbar = ({ onToggle }) => {
             onClick={toggleSidebar}
             className="w-full flex justify-center items-center py-3 rounded-xl border border-white/10 dark:border-white/5 hover:bg-white/10 dark:hover:bg-white/5 transition-all duration-300 backdrop-blur-sm group hover:border-white/20"
           >
-            <div className="group-hover:scale-110 transition-transform duration-300 text-white">
+            <div className="group-hover:scale-110 transition-transform duration-300 text-white ">
               {expanded ? <ChevronLeft size={22} /> : <ChevronRight size={20} />}
             </div>
           </button>

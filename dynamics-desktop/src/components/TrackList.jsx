@@ -252,7 +252,7 @@ const TrackList = ({ tracks, onDelete, onPlay, title = "Songs" }) => {
       </div>
 
       {/* Track List */}
-      <div className="space-y-1">
+      <div className="space-y-1 mb-20">
         {tracks.map((track, index) => (
           <TrackListItem
             key={track.spotify_id}

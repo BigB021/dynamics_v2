@@ -1,23 +1,47 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
-# dependencies
-/node_modules
-/.pnp
+# Node & dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnp/
 .pnp.js
 
-# testing
-/coverage
+# Build output
+/build/
+/release/
+squashfs-root/
 
-# production
-/build
+# Python virtual environment
+music-server/venv/
 
-# misc
+# Database files
+music-server/db/*.db
+
+# System files
 .DS_Store
+Thumbs.db
+
+# Local env files — KEEP `.env` but ignore others
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
 
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+# Coverage / test output
+coverage/
+
+# Optional cache/config
+.vscode/
+.idea/
+*.log
+
+# Ignore Electron build unpacked files
+release/linux-unpacked/
+release/*.AppImage
+
+# Optional build scripts/cache
+*.bak
+*.swp
+*.tmp
+*.cache
+*.lock

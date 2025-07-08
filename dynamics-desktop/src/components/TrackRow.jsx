@@ -74,7 +74,7 @@ const TrackRow = ({ track, queue, showIndex = false, index = 0 }) => {
       const { taskId } = res.data;
 
       eventSourceRef.current = new EventSource(
-        `${BACKEND_URL}/api/download/progress/${taskId}`
+        `${BACKEND_URL}/api/download/progress/${taskId}?token=${token}`
       );
 
       eventSourceRef.current.onmessage = (event) => {

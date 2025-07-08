@@ -36,7 +36,7 @@ const DownloadedTracks = () => {
     if (!token) return;
 
     setLoading(true);
-    fetch('${BACKEND_URL}/api/downloaded', {
+    fetch(`${BACKEND_URL}/api/downloaded`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },

@@ -131,7 +131,14 @@ async function downloadWithSpotDL(url, taskId, userId) {
     const spotifyTracks = await getSpotifyTracks(entity);
 
     const outputPath = path.join(downloadDir, '{artist} - {title}');
-    const args = ['--output', outputPath, '--bitrate', '192k', '--format', 'mp3', url];
+    const args = [
+      '--output', outputPath, 
+      '--bitrate', '192k', 
+      '--format', 'mp3', 
+      '--client-id', process.env.SPOTIFY_CLIENT_ID,
+      '--client-secret', process.env.SPOTIFY_CLIENT_SECRET,
+      url
+    ];
     console.log("spotdl path",spotdlPath)
     console.log(`[init] Final resolved SpotDL path: ${spotdlPath}`);
     console.log(`[init] SpotDL exists?`, fs.existsSync(spotdlPath));
