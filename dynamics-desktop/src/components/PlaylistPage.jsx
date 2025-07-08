@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Plus, Trash2, Music, Calendar } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext';
 import { authFetch } from '../utils/authFetch';
+import { BACKEND_URL } from '../utils/authFetch';
 
 const PlaylistPage = () => {
   const [playlists, setPlaylists] = useState([]);
@@ -16,7 +17,7 @@ const PlaylistPage = () => {
   }, []);
 
   const fetchPlaylists = () => {
-    authFetch('http://localhost:3000/api/playlists')
+    authFetch(`${BACKEND_URL}/api/playlists`)
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data)) {
@@ -39,7 +40,7 @@ const PlaylistPage = () => {
     if (cover) formData.append('cover', cover);
 
     try {
-      const res = await authFetch('http://localhost:3000/api/playlists', {
+      const res = await authFetch(`${BACKEND_URL}/api/playlists`, {
         method: 'POST',
         body: formData,
       });
@@ -59,7 +60,7 @@ const PlaylistPage = () => {
     if (!window.confirm('Are you sure you want to delete this playlist?')) return;
 
     try {
-      const res = await authFetch(`http://localhost:3000/api/playlists/${id}`, {
+      const res = await authFetch(`${BACKEND_URL}/api/playlists/${id}`, {
         method: 'DELETE',
       });
 
@@ -72,11 +73,17 @@ const PlaylistPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-zinc-950 dark:via-zinc-900 dark:to-indigo-950 text-theme.neon.text flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-gray-100 via-white to-gray-100 dark:from-slate-900 dark:via-zinc-900 dark:to-slate-900 px-4 sm:px-6 lg:px-8 py-6 sm:py-8 relative overflow-hidden transition-colors duration-300">
+      {/* Animated Background Elements */}
+      <div className="absolute inset-0">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute top-3/4 right-1/4 w-80 h-80 bg-pink-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+        <div className="absolute top-1/2 left-1/2 w-72 h-72 bg-cyan-500/10 rounded-full blur-3xl animate-pulse delay-2000"></div>
+      </div>
       <div className="p-8 max-w-7xl mx-auto flex-grow">
-        <p className="text-theme.neon.textSecondary text-lg select-none">
-  Welcome back, {user?.username || 'Guest'} — {playlists.length} {playlists.length === 1 ? 'playlist' : 'playlists'}
-</p>
+        <p className="text-4xl sm:text-3xl lg:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 animate-gradient-x mb-10">
+          Welcome back, {user?.username || 'Guest'}
+        </p>
 
         {/* Header */}
         <div className="flex justify-between items-center mb-12">
@@ -156,7 +163,7 @@ const PlaylistPage = () => {
                 <div className="relative overflow-hidden rounded-2xl">
                   {pl.cover ? (
                     <img
-                      src={`http://localhost:3000/media/${pl.cover}`}
+                      src={`${BACKEND_URL}/media/${pl.cover}`}
                       alt={`${pl.name} cover`}
                       className="w-full aspect-square object-cover group-hover:scale-110 transition-transform duration-700"
                     />

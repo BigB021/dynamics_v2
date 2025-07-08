@@ -17,12 +17,12 @@ export const AuthProvider = ({ children }) => {
 
   const [userId, setUserId] = useState(() => {
     const id = localStorage.getItem('userId');
-    console.log('[AuthContext] Initial userId:', id);
+    //console.log('[AuthContext] Initial userId:', id);
     return id;
   });
 
 
-  // 🆕 Fetch user info if token exists
+  // Fetch user info if token exists
   useEffect(() => {
     if (token) {
       authFetch('http://localhost:3000/api/auth/me')
@@ -31,7 +31,7 @@ export const AuthProvider = ({ children }) => {
           return res.json();
         })
         .then(data => {
-          console.log('[AuthContext] Loaded user info:', data);
+          //console.log('[AuthContext] Loaded user info:', data);
           setUser(data);
         })
         .catch(err => {
@@ -66,11 +66,11 @@ export const AuthProvider = ({ children }) => {
 
 
   useEffect(() => {
-    console.log('[AuthContext] token changed:', token);
+    //console.log('[AuthContext] token changed:', token);
   }, [token]);
 
   useEffect(() => {
-    console.log('[AuthContext] userId changed:', userId);
+    //console.log('[AuthContext] userId changed:', userId);
   }, [userId]);
 
   return (

@@ -2,12 +2,12 @@
 import { useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 
-// 🔁 Validate token value
+// Validate token value
 const isValidToken = (token) => {
   return token && token !== 'null' && token !== 'undefined';
 };
 
-// ✅ Hook version for React components
+// Hook version for React components
 export const useAuthFetch = () => {
   const { token } = useContext(AuthContext);
 
@@ -24,9 +24,11 @@ export const useAuthFetch = () => {
   };
 };
 
-// ✅ Non-hook version (e.g., for AuthContext or outside components)
+export const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+
 export const authFetch = (url, options = {}) => {
   let token = localStorage.getItem('token');
+
 
   if (!isValidToken(token)) {
     token = null;
@@ -39,6 +41,10 @@ export const authFetch = (url, options = {}) => {
   if (token) {
     headers.Authorization = `Bearer ${token}`;
   }
+  
+  const fetchUrl = url.startsWith('http') ? url : BACKEND_URL + url;
 
-  return fetch(url, { ...options, headers });
+  console.log("fetch url: "+fetchUrl);
+
+  return fetch(fetchUrl, { ...options, headers });
 };

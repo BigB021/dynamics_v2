@@ -3,6 +3,7 @@ import axios from 'axios';
 import { Play, Download, Loader2 } from 'lucide-react';
 import { PlayerContext } from '../context/PlayerContext';
 import { AuthContext } from '../context/AuthContext';
+import { BACKEND_URL } from '../utils/authFetch';
 
 const extractSpotifyId = (url) => {
   const match = url.match(/track\/([a-zA-Z0-9]+)/);
@@ -20,6 +21,7 @@ const SearchResultItem = ({ track, onPlay }) => {
   const eventSourceRef = useRef(null);
   const { setCurrentTrack } = useContext(PlayerContext);
   const { token } = useContext(AuthContext);
+  
 
 
   const spotifyId = extractSpotifyId(track.url);
@@ -29,7 +31,7 @@ const SearchResultItem = ({ track, onPlay }) => {
     console.log("tokeeeen:"+token)
 
     axios
-      .get(`http://localhost:3000/api/download/check?spotifyId=${spotifyId}`, {
+      .get(`${BACKEND_URL}/api/download/check?spotifyId=${spotifyId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -37,7 +39,7 @@ const SearchResultItem = ({ track, onPlay }) => {
       .then((res) => {
         if (res.data.downloaded) {
           setDownloaded(true);
-          setFileUrl(`http://localhost:3000/media/${encodeURIComponent(res.data.filePath)}`);
+          setFileUrl(`${BACKEND_URL}/media/${encodeURIComponent(res.data.filePath)}`);
         }
       })
       .catch(console.error);
@@ -53,7 +55,7 @@ const SearchResultItem = ({ track, onPlay }) => {
     setProgressText('Starting download...');
 
     try {
-      const res = await axios.post('http://localhost:3000/api/download', 
+      const res = await axios.post(`${BACKEND_URL}/api/download`, 
             { url: track.url },
             {
               headers: {
@@ -64,7 +66,7 @@ const SearchResultItem = ({ track, onPlay }) => {
      const { taskId } = res.data;
 
       eventSourceRef.current = new EventSource(
-        `http://localhost:3000/api/download/progress/${taskId}?token=${token}`
+        `${BACKEND_URL}/api/download/progress/${taskId}?token=${token}`
       );
 
       eventSourceRef.current.onmessage = (event) => {
@@ -76,7 +78,7 @@ const SearchResultItem = ({ track, onPlay }) => {
           eventSourceRef.current.close();
           setDownloaded(true);
           const fileName = `${sanitizeFileName(track.artist)} - ${sanitizeFileName(track.name)}.mp3`;
-          setFileUrl(`http://localhost:3000/media/${encodeURIComponent(fileName)}`);
+          setFileUrl(`${BACKEND_URL}/media/${encodeURIComponent(fileName)}`);
         } else if (state === 'error') {
           setIsDownloading(false);
           eventSourceRef.current.close();

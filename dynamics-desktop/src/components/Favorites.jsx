@@ -3,6 +3,7 @@ import { Heart, Play } from 'lucide-react';
 import { PlayerContext } from '../context/PlayerContext';
 import { FavoritesContext } from '../context/FavoritesContext';
 import TrackList from '../components/TrackList';
+import { BACKEND_URL } from '../utils/authFetch';
 
 export default function Favorites() {
   const { favorites, toggleFavorite } = useContext(FavoritesContext);
@@ -15,7 +16,7 @@ export default function Favorites() {
 
   const handlePlay = (track) => {
     if (!track.url && track.filename) {
-      track.url = `http://localhost:3000/media/${track.filename}`;
+      track.url = `${BACKEND_URL}/media/${track.filename}`;
     }
     setQueue(favorites);
     playTrack(track, favorites);

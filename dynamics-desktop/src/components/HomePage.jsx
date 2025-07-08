@@ -8,6 +8,8 @@ import { PlayerContext } from '../context/PlayerContext';
 import SearchBar from './SearchBar';
 import TrackRow from './TrackRow';
 import { AuthContext } from '../context/AuthContext';
+import { BACKEND_URL } from '../utils/authFetch';
+
 
 const HomePage = () => {
   const [data, setData] = useState(null);
@@ -18,7 +20,7 @@ const HomePage = () => {
 
   const fetchData = async () => {
     try {
-      const res = await fetch('http://localhost:3000/api/home', {
+      const res = await fetch(`${BACKEND_URL}/api/home`, {
         headers: {
           Authorization: `Bearer ${token}`,  
         },
@@ -291,6 +293,7 @@ const HomePage = () => {
                   <Shuffle size={16} className="text-purple-400" />
                   <span className="text-sm">Shuffle through endless music discoveries</span>
                 </div>
+                  <span className="text-md pt-10 ">Made By Youssef aka.  <a className='text-pink-400 hover:text-pink-700' href="https://github.com/BigB021">@Bigb_021</a> </span>
               </div>
             </footer>
           </div>

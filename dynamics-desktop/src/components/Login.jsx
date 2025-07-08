@@ -1,6 +1,8 @@
 import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
+import { authFetch } from '../utils/authFetch';
+
 
 export default function Login() {
   const [username, setUsername] = useState('');
@@ -17,13 +19,13 @@ export default function Login() {
       setLoading(true);
     
       try {
-        const res = await fetch('/api/auth/login', {
+        const res = await authFetch('/api/auth/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ username, password }),
         });
     
-        const data = await res.json(); // ✅ Call once
+        const data = await res.json(); 
     
         if (!res.ok) {
           throw new Error(data.error || 'Failed to login');

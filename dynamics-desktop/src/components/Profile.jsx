@@ -14,6 +14,7 @@ import {
   Save,
   X
 } from 'lucide-react';
+import { BACKEND_URL } from '../utils/authFetch';
 
 const Profile = () => {
   //const [user, setUser] = useState(null);
@@ -26,15 +27,16 @@ const Profile = () => {
   const [isEditingUsername, setIsEditingUsername] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
+
   useEffect(() => {
-    axios.get('/api/auth/me', {
+    axios.get(`${BACKEND_URL}/api/auth/me`, {
       headers: { Authorization: `Bearer ${token}` }
     }).then(res => {
       setUser(res.data);
       setNewUsername(res.data.username);
     });
   
-    axios.get('/api/user/stats', {
+    axios.get(`${BACKEND_URL}/api/user/stats`, {
       headers: { Authorization: `Bearer ${token}` }
     }).then(res => setStats(res.data))
       .catch(err => console.error("Stats fetch failed:", err))
@@ -43,7 +45,7 @@ const Profile = () => {
 
   const updateUsername = async () => {
     try {
-      await axios.put('/api/auth/me/username', { username: newUsername }, {
+      await axios.put(`${BACKEND_URL}/api/auth/me/username`, { username: newUsername }, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setUser({ ...user, username: newUsername });
@@ -62,7 +64,7 @@ const Profile = () => {
     formData.append('avatar', avatar);
 
     try {
-      const res = await axios.post('/api/auth/me/avatar', formData, {
+      const res = await axios.post(`${BACKEND_URL}/api/auth/me/avatar`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'
@@ -116,7 +118,7 @@ const Profile = () => {
           <div className="relative inline-block mb-6">
             {user?.profile_picture ? (
               <img
-                src={`http://localhost:3000/media/${user.profile_picture}`}
+                src={`${BACKEND_URL}/media/${user.profile_picture}`}
                 alt="Profile"
                 className="w-32 h-32 rounded-full object-cover border-4 border-purple-500 shadow-lg hover:scale-105 transition-transform duration-300"
               />

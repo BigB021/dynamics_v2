@@ -4,6 +4,7 @@ import { PlayerContext } from '../context/PlayerContext';
 import { AuthContext } from '../context/AuthContext';
 import { ArrowLeft, Play, Music, Clock, User, Hash } from 'lucide-react';
 import TrackList from '../components/TrackList';
+import { BACKEND_URL } from '../utils/authFetch';
 
 const AlbumPage = () => {
   const { spotify_id } = useParams();
@@ -18,7 +19,9 @@ const AlbumPage = () => {
   useEffect(() => {
     if (!token) return;
 
-    fetch(`http://localhost:3000/api/albums/${encodeURIComponent(spotify_id)}`, {
+    const BACKEND_BASE_URL = `http://localhost:${import.meta.env.VITE_BACK_PORT}`;
+
+    fetch(`${BACKEND_BASE_URL}/api/albums/${encodeURIComponent(spotify_id)}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },

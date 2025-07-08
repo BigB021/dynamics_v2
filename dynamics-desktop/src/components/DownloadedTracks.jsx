@@ -2,7 +2,8 @@ import { useEffect, useState, useContext } from 'react';
 import { Music2, Download } from 'lucide-react';
 import TrackList from './TrackList';
 import { PlayerContext } from '../context/PlayerContext';
-import { AuthContext } from '../context/AuthContext'; // ✅
+import { AuthContext } from '../context/AuthContext'; 
+import { BACKEND_URL } from '../utils/authFetch';
 
 const DownloadedTracks = () => {
   const [tracks, setTracks] = useState([]);
@@ -13,7 +14,7 @@ const DownloadedTracks = () => {
   const handleDelete = (spotifyId) => {
     if (!token) return;
 
-    fetch(`http://localhost:3000/api/downloaded/${spotifyId}`, {
+    fetch(`${BACKEND_URL}/api/downloaded/${spotifyId}`, {
       method: 'DELETE',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -35,7 +36,7 @@ const DownloadedTracks = () => {
     if (!token) return;
 
     setLoading(true);
-    fetch('http://localhost:3000/api/downloaded', {
+    fetch('${BACKEND_URL}/api/downloaded', {
       headers: {
         Authorization: `Bearer ${token}`,
       },

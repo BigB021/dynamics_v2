@@ -3,6 +3,7 @@ import axios from 'axios';
 import { Play, Download, Heart, Loader2 } from 'lucide-react';
 import { PlayerContext } from '../context/PlayerContext';
 import { AuthContext } from '../context/AuthContext';
+import { BACKEND_URL } from '../utils/authFetch';
 
 const extractSpotifyId = (url) => {
   const match = url?.match(/track\/([a-zA-Z0-9]+)/);
@@ -40,14 +41,14 @@ const TrackRow = ({ track, queue, showIndex = false, index = 0 }) => {
     if (!spotifyId) return;
 
     axios
-      .get(`http://localhost:3000/api/download/check?spotifyId=${spotifyId}`, {
+      .get(`${BACKEND_URL}/api/download/check?spotifyId=${spotifyId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       })
       .then((res) => {
         if (res.data.downloaded) {
-          const url = `http://localhost:3000/media/${encodeURIComponent(res.data.filePath)}`;
+          const url = `${BACKEND_URL}/media/${encodeURIComponent(res.data.filePath)}`;
           setFileUrl(url);
           setDownloaded(true);
         }
@@ -65,7 +66,7 @@ const TrackRow = ({ track, queue, showIndex = false, index = 0 }) => {
     setProgressText('Starting download...');
 
     try {
-      const res = await axios.post('http://localhost:3000/api/download',
+      const res = await axios.post(`${BACKEND_URL}/api/download`,
         { url: track.url },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -73,7 +74,7 @@ const TrackRow = ({ track, queue, showIndex = false, index = 0 }) => {
       const { taskId } = res.data;
 
       eventSourceRef.current = new EventSource(
-        `http://localhost:3000/api/download/progress/${taskId}`
+        `${BACKEND_URL}/api/download/progress/${taskId}`
       );
 
       eventSourceRef.current.onmessage = (event) => {
@@ -85,7 +86,7 @@ const TrackRow = ({ track, queue, showIndex = false, index = 0 }) => {
           setIsDownloading(false);
           setDownloaded(true);
           const fileName = `${sanitizeFileName(track.artist)} - ${sanitizeFileName(track.title)}.mp3`;
-          setFileUrl(`http://localhost:3000/media/${encodeURIComponent(fileName)}`);
+          setFileUrl(`${BACKEND_URL}/media/${encodeURIComponent(fileName)}`);
         } else if (state === 'error') {
           setIsDownloading(false);
           eventSourceRef.current.close();

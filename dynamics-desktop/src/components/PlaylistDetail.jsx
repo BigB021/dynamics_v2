@@ -4,6 +4,7 @@ import { PlayerContext } from '../context/PlayerContext';
 import { ArrowLeft, Play, Music, Clock, User, Hash } from 'lucide-react';
 import TrackList from '../components/TrackList';
 import { authFetch } from '../utils/authFetch';
+import { BACKEND_URL } from '../utils/authFetch';
 
 const PlaylistDetail = () => {
   const { id } = useParams();
@@ -14,7 +15,7 @@ const PlaylistDetail = () => {
   const { playTrack, setQueue, currentTrack } = useContext(PlayerContext);
 
   useEffect(() => {
-      authFetch(`http://localhost:3000/api/playlists/${id}`)
+      authFetch(`${BACKEND_URL}/api/playlists/${id}`)
         .then(res => res.json())
         .then(data => {
           const { playlist, tracks } = data;
@@ -22,8 +23,8 @@ const PlaylistDetail = () => {
             .filter(track => track.file_path)
             .map(track => ({
               ...track,
-              url: `http://localhost:3000/media/${track.file_path.split('/').pop()}`,
-              cover: track.cover ? `http://localhost:3000/media/${track.cover}` : null,
+              url: `${BACKEND_URL}/media/${track.file_path.split('/').pop()}`,
+              cover: track.cover ? `${BACKEND_URL}/media/${track.cover}` : null,
             }));
         
           setTracks(enriched);
@@ -65,7 +66,7 @@ const PlaylistDetail = () => {
             <div className="flex-shrink-0">
               {playlistInfo?.cover ? (
                 <img
-                  src={`http://localhost:3000/media/${playlistInfo.cover}`}
+                  src={`${BACKEND_URL}/media/${playlistInfo.cover}`}
                   alt="Playlist cover"
                   className="w-72 h-72 object-cover rounded-2xl shadow-2xl border-4 border-white/50 dark:border-gray-700"
                 />

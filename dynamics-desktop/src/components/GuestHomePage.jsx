@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Play, Music, Clock, Globe } from 'lucide-react';
+import { BACKEND_URL } from '../utils/authFetch';
 
 const GuestHomePage = () => {
   const navigate = useNavigate();
@@ -9,13 +10,14 @@ const GuestHomePage = () => {
   const [albums, setAlbums] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
   useEffect(() => {
     async function fetchGuestHomeData() {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch('http://localhost:3000/api/guest-home');
+        const res = await fetch(`${BACKEND_URL}/api/guest-home`);
         if (!res.ok) throw new Error('Failed to fetch guest homepage data');
         const data = await res.json();
 
@@ -151,6 +153,13 @@ const GuestHomePage = () => {
         </div>
         <p className="text-gray-400">Pop, Rock, Hip-Hop, Jazz, Classical</p>
       </section>
+
+      {/* Footer */}
+      <footer className="mt-12 sm:mt-16 pt-6 sm:pt-8 border-t border-white/10 animate-fade-in-up delay-700">
+        <div className="text-center text-gray-400 space-y-3">
+            <span className="text-md pt-10 ">Made By Youssef aka.  <a className='text-pink-400 hover:text-pink-700' href="https://github.com/BigB021">@Bigb_021</a> </span>
+        </div>
+      </footer>
 
       <style jsx>{`
         @keyframes fade-in-up {

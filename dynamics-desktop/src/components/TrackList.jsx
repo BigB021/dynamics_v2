@@ -4,6 +4,7 @@ import { PlayerContext } from '../context/PlayerContext';
 import { authFetch } from '../utils/authFetch';
 import { AuthContext } from '../context/AuthContext';
 import { FavoritesContext } from '../context/FavoritesContext';
+import { BACKEND_URL } from '../utils/authFetch';
 
 const TrackListItem = ({ track, onDelete, onPlay, index }) => {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -23,7 +24,7 @@ const TrackListItem = ({ track, onDelete, onPlay, index }) => {
   const fetchPlaylists = async () => {
     if (!token) return alert("You must be logged in");
     try {
-      const res = await authFetch('http://localhost:3000/api/playlists'); // No headers here
+      const res = await authFetch(`${BACKEND_URL}/api/playlists`); // No headers here
       if (!res.ok) throw new Error('Failed to fetch playlists');
       const data = await res.json();
       setPlaylists(data);
@@ -36,7 +37,7 @@ const TrackListItem = ({ track, onDelete, onPlay, index }) => {
   const handleAddToPlaylist = async (playlistId) => {
     if (!token) return alert("You must be logged in");
     try {
-      const res = await authFetch(`http://localhost:3000/api/playlists/${playlistId}/tracks`, {
+      const res = await authFetch(`${BACKEND_URL}/api/playlists/${playlistId}/tracks`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ spotifyId: track.spotify_id }),  

@@ -136,7 +136,7 @@ const VerticalNavbar = ({ onToggle }) => {
           </nav>
 
           {/* Theme Toggle */}
-          <div className="flex justify-center">
+          <div className="flex justify-center mb-5">
             <IconButton
               icon={darkMode ? <Sun size={22} className="text-yellow-400" /> : <Moon size={22} className="text-indigo-400" />}
               title="Toggle Theme"
