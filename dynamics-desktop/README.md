@@ -48,9 +48,10 @@ cd dynamics-desktop
 ```bash
 mkdir -p ~/dynamics/media
 ```
-###  4. Install SpotDL in Python venv
+###  4. Install SpotDL in Python venv 
+1. Navigate to your home directory ex home/your-username
 ```bash
-cd music-server
+cd dynamics
 python3 -m venv venv
 source venv/bin/activate
 pip install spotdl
