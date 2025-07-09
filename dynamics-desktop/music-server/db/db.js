@@ -43,6 +43,8 @@ db.prepare(`
     release_date TEXT,
     cover TEXT,
     downloaded_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    track_number INTEGER,
+    disc_number INTEGER,
     UNIQUE(user_id, spotify_id)
   )
 `).run();
@@ -119,13 +121,13 @@ module.exports = {
   },
 
   // === TRACKS ===
-  addDownload(userId, spotifyId, filePath, status, artist = null, title = null, album = null, duration = null, releaseDate = null, cover = null) {
+  addDownload(userId, spotifyId, filePath, status, artist = null, title = null, album = null, duration = null, releaseDate = null, cover = null, trackNumber = null, discNumber = null) {
     const stmt = db.prepare(`
       INSERT OR REPLACE INTO downloads 
-        (user_id, spotify_id, file_path, status, artist, title, album, duration, release_date, cover)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (user_id, spotify_id, file_path, status, artist, title, album, duration, release_date, cover, track_number, disc_number)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
-    stmt.run(userId, spotifyId, filePath, status, artist, title, album, duration, releaseDate, cover);
+    stmt.run(userId, spotifyId, filePath, status, artist, title, album, duration, releaseDate, cover, trackNumber, discNumber);
   },
 
   getDownloadBySpotifyId(userId, spotifyId) {
@@ -191,7 +193,7 @@ module.exports = {
     return db.prepare(`
       SELECT * FROM downloads
       WHERE user_id = ? AND album = ?
-      ORDER BY downloaded_at ASC
+      ORDER BY disc_number ASC, track_number ASC
     `).all(userId, albumName);
   },
 

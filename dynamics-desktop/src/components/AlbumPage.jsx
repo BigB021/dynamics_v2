@@ -13,7 +13,7 @@ const AlbumPage = () => {
   const navigate = useNavigate();
   const { playTrack, setQueue } = useContext(PlayerContext);
   const { token } = useContext(AuthContext); 
-  console.log("Route params:", useParams());
+ // console.log("Route params:", useParams());
 
 
   useEffect(() => {
@@ -42,6 +42,7 @@ const AlbumPage = () => {
   const handlePlay = (track) => {
     setQueue(tracks);
     playTrack(track, tracks);
+    console.log("Playing track number: ", track);
   };
 
   const handlePlayAll = () => {

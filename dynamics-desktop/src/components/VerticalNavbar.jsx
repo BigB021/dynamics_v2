@@ -99,11 +99,6 @@ const VerticalNavbar = ({ onToggle }) => {
       } bg-slate-900/20 dark:bg-slate-900/40 backdrop-blur-xl border-r border-white/10 dark:border-white/5 z-40 px-4 py-6 flex flex-col transition-all duration-300 shadow-2xl`}
       style={{ height: '100vh' }}
     >
-      {/* Decorative Background Elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-4 w-32 h-32 bg-purple-500/10 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-40 right-4 w-24 h-24 bg-indigo-500/10 rounded-full blur-2xl animate-pulse delay-1000"></div>
-      </div>
 
       {/* Content Container with proper flex layout */}
       <div className="relative z-10 flex flex-col h-full pb-40 ">

@@ -96,7 +96,7 @@ const TrackListItem = ({ track, onDelete, onPlay, index }) => {
         <span className={`text-sm font-medium group-hover:opacity-0 transition-opacity ${
           isCurrentTrack ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-500 dark:text-gray-400'
         }`}>
-          {index + 1}
+          {track.track_number ?? index + 1}
         </span>
         <button
           onClick={(e) => {
@@ -138,6 +138,7 @@ const TrackListItem = ({ track, onDelete, onPlay, index }) => {
       <div className="hidden lg:block flex-1 min-w-0 px-4">
         <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
           {track.album || 'Unknown Album'}
+          {track.disc_number ? ` (Disc ${track.disc_number})` : ''}
         </div>
       </div>
 
