@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Upload, Music, Sparkles } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext';
+import { BACKEND_URL } from '../utils/authFetch';
 
 const CreatePlaylist = () => {
   const [name, setName] = useState('');
@@ -31,7 +32,7 @@ const CreatePlaylist = () => {
       if (cover) formData.append('cover', cover);
     
       try {
-        const res = await fetch('http://localhost:3000/api/playlists', {
+        const res = await fetch(`${BACKEND_URL}/api/playlists`, {
           method: 'POST',
           headers: {
             // If your backend expects auth token in header:

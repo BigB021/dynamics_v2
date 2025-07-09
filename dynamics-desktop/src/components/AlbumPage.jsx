@@ -19,9 +19,8 @@ const AlbumPage = () => {
   useEffect(() => {
     if (!token) return;
 
-    const BACKEND_BASE_URL = `http://localhost:${import.meta.env.VITE_BACK_PORT}`;
 
-    fetch(`${BACKEND_BASE_URL}/api/albums/${encodeURIComponent(spotify_id)}`, {
+    fetch(`${BACKEND_URL}/api/albums/${encodeURIComponent(spotify_id)}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },

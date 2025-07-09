@@ -213,16 +213,21 @@ async function downloadWithSpotDL(url, taskId, userId) {
     const coverFileName = coverPath ? path.basename(coverPath) : null;
 
     let albumSpotifyId = null;
+    let albumDbId = null;
+      
     if (entity.type === 'album') {
       const albumInfo = await spotifyFetch(`albums/${entity.id}`);
-      albumSpotifyId = albumInfo.id; // get true ID from API
+      albumSpotifyId = albumInfo.id;
       albumName = sanitizeFileName(albumInfo.name);
       releaseDate = albumInfo.release_date || null;
+    
+      albumDbId = await addAlbum(albumName, artistName, coverFileName, releaseDate, albumSpotifyId);
+      console.log(`[${taskId}] Album added with DB id: ${albumDbId}`);
+      console.log(`[${taskId}] Saving album with Spotify ID: ${albumSpotifyId}`);
+    } else {
+      console.log(`[${taskId}] Not an album, skipping album DB creation`);
     }
-
-    const albumDbId = await addAlbum(albumName, artistName, coverFileName, releaseDate, albumSpotifyId);
-    console.log(`[${taskId}] Album added with DB id: ${albumDbId}`);
-    console.log(`[${taskId}] Saving album with Spotify ID: ${albumSpotifyId}`);
+    
 
     function matchTrackMeta(artist, title) {
       artist = artist.toLowerCase();

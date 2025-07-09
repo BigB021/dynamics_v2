@@ -5,6 +5,7 @@ import { Download, Loader2, Play } from 'lucide-react';
 import TrackRow from '../components/TrackRow';
 import { PlayerContext } from '../context/PlayerContext';
 import { AuthContext } from '../context/AuthContext';
+import { BACKEND_URL } from '../utils/authFetch';
 
 const AlbumPreviewPage = () => {
   const { spotify_id } = useParams();
@@ -23,7 +24,7 @@ const AlbumPreviewPage = () => {
       setError(null);
       try {
         const res = await axios.get(
-          `http://localhost:3000/api/preview/album/${spotify_id}`,
+          `${BACKEND_URL}/api/preview/album/${spotify_id}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -56,7 +57,7 @@ const AlbumPreviewPage = () => {
 
     try {
       const res = await axios.post(
-        'http://localhost:3000/api/download',
+        `${BACKEND_URL}/api/download`,
         {
           url: `https://open.spotify.com/album/${spotify_id}`,
         },
@@ -69,7 +70,7 @@ const AlbumPreviewPage = () => {
 
       const { taskId } = res.data;
       eventSourceRef.current = new EventSource(
-        `http://localhost:3000/api/download/progress/${taskId}?token=${token}`
+        `${BACKEND_URL}/api/download/progress/${taskId}?token=${token}`
       );
 
 

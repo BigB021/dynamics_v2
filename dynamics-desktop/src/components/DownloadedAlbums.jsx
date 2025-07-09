@@ -2,6 +2,7 @@ import { useEffect, useState, useContext } from 'react';
 import { Album } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext'; 
+import { BACKEND_URL } from '../utils/authFetch';
 
 const DownloadedAlbums = () => {
   const [albums, setAlbums] = useState([]);
@@ -15,7 +16,7 @@ const DownloadedAlbums = () => {
   const fetchAlbums = () => {
     if (!token) return;
 
-    fetch('http://localhost:3000/api/albums', {
+    fetch(`${BACKEND_URL}/api/albums`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -32,7 +33,7 @@ const DownloadedAlbums = () => {
     if (!token) return;
     if (!window.confirm(`Are you sure you want to delete the album "${albumName}"?`)) return;
 
-    fetch(`http://localhost:3000/api/albums/${albumId}`, {
+    fetch(`${BACKEND_URL}/api/albums/${albumId}`, {
       method: 'DELETE',
       headers: {
         Authorization: `Bearer ${token}`,

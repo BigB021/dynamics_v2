@@ -9,7 +9,7 @@ const DownloadedTracks = () => {
   const [tracks, setTracks] = useState([]);
   const [loading, setLoading] = useState(true);
   const { currentTrack, playTrack, setQueue } = useContext(PlayerContext);
-  const { token } = useContext(AuthContext); // ✅
+  const { token } = useContext(AuthContext); 
 
   const handleDelete = (spotifyId) => {
     if (!token) return;
