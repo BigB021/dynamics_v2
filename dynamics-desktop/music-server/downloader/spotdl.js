@@ -14,8 +14,20 @@ dotenv.config();
 
 
 
-//const spotdlPath = process.env.SPOTDL_PATH;
-const spotdlPath = path.join(os.homedir(), 'dynamics', 'venv', 'bin', 'spotdl');;
+const isWindows = os.platform() === 'win32';
+
+// __dirname in spotdl.js resolves to music-server/downloader, so go up accordingly
+// Adjust this path relative to your project structure
+
+const baseDir = path.resolve(__dirname, '../../venv');
+
+const spotdlPath = isWindows
+  ? path.join(baseDir, 'Scripts', 'spotdl.exe')
+  : path.join(baseDir, 'bin', 'spotdl');
+
+console.log('Using spotdl binary:', spotdlPath);
+
+
 const downloadDir = process.env.DOWNLOAD_DIR || path.join(os.homedir(), 'dynamics', 'media');
 if (!fs.existsSync(downloadDir)) fs.mkdirSync(downloadDir, { recursive: true });
 const downloads = {}; // taskId => { state, message }
@@ -130,7 +142,9 @@ async function downloadWithSpotDL(url, taskId, userId) {
 
     const spotifyTracks = await getSpotifyTracks(entity);
 
-    const outputPath = path.join(downloadDir, '{artist} - {title}');
+    const outputPath = isWindows
+      ? path.join(downloadDir, '{artist} - {title}').replace(/\\/g, '\\\\') // escape backslashes for Windows
+      : path.join(downloadDir, '{artist} - {title}');
     const args = [
       '--output', outputPath, 
       '--bitrate', '192k', 

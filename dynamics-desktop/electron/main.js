@@ -6,7 +6,6 @@ require('dotenv').config({
   path: path.join(__dirname, process.env.ELECTRON_DEV ? '.env.development' : '.env.production'),
 });
 
-
 let serverProcess = null;
 
 function createWindow() {
@@ -24,15 +23,12 @@ function createWindow() {
   const startUrl = process.env.ELECTRON_DEV
     ? `http://localhost:${port}`
     : `file://${path.join(process.resourcesPath, "build", "index.html")}`;
-  
 
   console.log(`🧭 Loading frontend from: ${startUrl}`);
-
 
   win.loadURL(startUrl);
 
   //win.webContents.openDevTools();
-
 
   win.webContents.on("did-fail-load", (event, errorCode, errorDesc, validatedURL) => {
     console.error(`❌ Failed to load: ${validatedURL}\nCode: ${errorCode}\nDesc: ${errorDesc}`);
@@ -41,7 +37,6 @@ function createWindow() {
   win.webContents.on("did-finish-load", () => {
     console.log("✅ Frontend loaded successfully");
   });
-
 }
 
 function startBackend() {
@@ -58,7 +53,16 @@ function startBackend() {
   serverProcess = spawn("node", [serverPath], {
     cwd: serverBase, // important: cwd to find node_modules here
     env: { ...process.env, NODE_ENV: "production" },
-    stdio: "inherit",
+    stdio: "pipe",   // pipe stdio instead of inherit
+    windowsHide: true, // hide console window on Windows
+  });
+
+  serverProcess.stdout.on('data', (data) => {
+    console.log(`[Backend] ${data.toString().trim()}`);
+  });
+
+  serverProcess.stderr.on('data', (data) => {
+    console.error(`[Backend ERR] ${data.toString().trim()}`);
   });
 
   serverProcess.on("error", (err) => {
@@ -79,7 +83,14 @@ app.whenReady().then(() => {
   });
 });
 
+// Kill backend process only when app is quitting
+app.on("before-quit", () => {
+  if (serverProcess) {
+    serverProcess.kill();
+  }
+});
+
+// Quit app when all windows closed (normal behavior)
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") app.quit();
-  if (serverProcess) serverProcess.kill();
 });

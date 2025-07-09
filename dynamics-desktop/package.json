@@ -24,7 +24,7 @@
     "start": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "electron": "ELECTRON_DEV=true electron .",
+    "electron": "cross-env ELECTRON_DEV=true electron .",
     "electron-build": "npm run build && electron .",
     "build-electron": "electron-builder"
   },
@@ -49,6 +49,7 @@
   "devDependencies": {
     "@vitejs/plugin-react": "^4.6.0",
     "autoprefixer": "^10.4.21",
+    "cross-env": "^7.0.3",
     "electron": "^37.1.0",
     "electron-builder": "^26.0.12",
     "electron-reload": "^2.0.0-alpha.1",
@@ -61,9 +62,6 @@
     "tailwindcss": "^3.4.17",
     "vite": "^7.0.0"
   },
-
-
-
   "build": {
     "appId": "com.youssef.dynamics",
     "productName": "Dynamics",
@@ -87,6 +85,10 @@
       {
         "from": "music-server/node_modules",
         "to": "music-server/node_modules"
+      },
+      {
+        "from": "venv",
+        "to": "venv"
       }
     ],
     "asarUnpack": [
@@ -97,10 +99,12 @@
     },
     "linux": {
       "icon": "build/logo.png",
-      "target": ["AppImage"]
+      "target": [
+        "AppImage"
+      ]
     },
     "win": {
-      "icon": "build/logo.ico",
+      "icon": "public/favicon.ico",
       "target": "nsis"
     }
   }
