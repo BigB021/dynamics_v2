@@ -3,7 +3,7 @@ import axios from 'axios';
 import { Play, Download, Heart, Loader2 } from 'lucide-react';
 import { PlayerContext } from '../context/PlayerContext';
 import { AuthContext } from '../context/AuthContext';
-import { BACKEND_URL } from '../utils/authFetch';
+import { getBackendURL } from '../utils/authFetch';
 
 const extractSpotifyId = (url) => {
   const match = url?.match(/track\/([a-zA-Z0-9]+)/);
@@ -28,37 +28,47 @@ const TrackRow = ({ track, queue, showIndex = false, index = 0 }) => {
     isPlaying,
   } = useContext(PlayerContext);
 
+  const [backendURL, setBackendURL] = useState(null);
+
+  useEffect(() => {
+    (async () => {
+      const url = await getBackendURL();
+      setBackendURL(url);
+    })();
+  }, []);
+
   const generateTrackId = (track) => track.spotify_id || extractSpotifyId(track.url) || `${track.artist}-${track.title}`;
   const isCurrentTrack = currentTrack?.trackId === generateTrackId(track);
   const isCurrentlyPlaying = isCurrentTrack && isPlaying;
 
   const spotifyId = extractSpotifyId(track.url) || track.spotify_id;
-  
-
-
 
   useEffect(() => {
-    if (!spotifyId) return;
+    if (!spotifyId || !token || !backendURL) return;
 
     axios
-      .get(`${BACKEND_URL}/api/download/check?spotifyId=${spotifyId}`, {
+      .get(`${backendURL}/api/download/check?spotifyId=${spotifyId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       })
       .then((res) => {
         if (res.data.downloaded) {
-          const url = `${BACKEND_URL}/media/${encodeURIComponent(res.data.filePath)}`;
+          const url = `${backendURL}/media/${encodeURIComponent(res.data.filePath)}`;
           setFileUrl(url);
           setDownloaded(true);
         }
       })
       .catch(console.error);
-  }, [spotifyId, token]);
+  }, [spotifyId, token, backendURL]);
 
   const handleDownload = async () => {
     if (!track.url) {
       alert('Track URL is undefined, cannot download');
+      return;
+    }
+    if (!backendURL) {
+      alert('Backend URL not loaded yet');
       return;
     }
 
@@ -66,7 +76,7 @@ const TrackRow = ({ track, queue, showIndex = false, index = 0 }) => {
     setProgressText('Starting download...');
 
     try {
-      const res = await axios.post(`${BACKEND_URL}/api/download`,
+      const res = await axios.post(`${backendURL}/api/download`,
         { url: track.url },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -74,7 +84,7 @@ const TrackRow = ({ track, queue, showIndex = false, index = 0 }) => {
       const { taskId } = res.data;
 
       eventSourceRef.current = new EventSource(
-        `${BACKEND_URL}/api/download/progress/${taskId}?token=${token}`
+        `${backendURL}/api/download/progress/${taskId}?token=${token}`
       );
 
       eventSourceRef.current.onmessage = (event) => {
@@ -86,7 +96,7 @@ const TrackRow = ({ track, queue, showIndex = false, index = 0 }) => {
           setIsDownloading(false);
           setDownloaded(true);
           const fileName = `${sanitizeFileName(track.artist)} - ${sanitizeFileName(track.title)}.mp3`;
-          setFileUrl(`${BACKEND_URL}/media/${encodeURIComponent(fileName)}`);
+          setFileUrl(`${backendURL}/media/${encodeURIComponent(fileName)}`);
         } else if (state === 'error') {
           setIsDownloading(false);
           eventSourceRef.current.close();

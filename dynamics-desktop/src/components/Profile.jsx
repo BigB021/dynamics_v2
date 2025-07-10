@@ -14,7 +14,7 @@ import {
   Save,
   X
 } from 'lucide-react';
-import { BACKEND_URL } from '../utils/authFetch';
+import { getBackendURL } from '../utils/authFetch';
 
 const Profile = () => {
   //const [user, setUser] = useState(null);
@@ -26,26 +26,41 @@ const Profile = () => {
   const [stats, setStats] = useState(null);
   const [isEditingUsername, setIsEditingUsername] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
-
+  const [backendURL, setBackendURL] = useState(null);
 
   useEffect(() => {
-    axios.get(`${BACKEND_URL}/api/auth/me`, {
-      headers: { Authorization: `Bearer ${token}` }
-    }).then(res => {
-      setUser(res.data);
-      setNewUsername(res.data.username);
-    });
-  
-    axios.get(`${BACKEND_URL}/api/user/stats`, {
-      headers: { Authorization: `Bearer ${token}` }
-    }).then(res => setStats(res.data))
-      .catch(err => console.error("Stats fetch failed:", err))
-      .finally(() => setLoading(false));
-  }, []);
+    async function fetchData() {
+      try {
+        const url = await getBackendURL();
+        setBackendURL(url);
+
+        if (!token) return;
+
+        // Fetch user data
+        const userRes = await axios.get(`${url}/api/auth/me`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setUser(userRes.data);
+        setNewUsername(userRes.data.username);
+
+        // Fetch stats
+        const statsRes = await axios.get(`${url}/api/user/stats`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setStats(statsRes.data);
+      } catch (err) {
+        console.error('Failed to fetch profile data:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, [token, setUser]);
 
   const updateUsername = async () => {
+    if (!backendURL) return;
     try {
-      await axios.put(`${BACKEND_URL}/api/auth/me/username`, { username: newUsername }, {
+      await axios.put(`${backendURL}/api/auth/me/username`, { username: newUsername }, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setUser({ ...user, username: newUsername });
@@ -57,23 +72,22 @@ const Profile = () => {
   };
 
   const uploadAvatar = async () => {
-    if (!avatar) return;
-    
+    if (!backendURL || !avatar) return;
+
     setUploadingAvatar(true);
     const formData = new FormData();
     formData.append('avatar', avatar);
 
     try {
-      const res = await axios.post(`${BACKEND_URL}/api/auth/me/avatar`, formData, {
+      const res = await axios.post(`${backendURL}/api/auth/me/avatar`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'
         }
       });
 
-      setUser({ ...user, profile_picture: res.data.filename });
-      setAvatar(null);
       setUser((prev) => ({ ...prev, profile_picture: res.data.filename }));
+      setAvatar(null);
 
       alert('Avatar uploaded!');
     } catch (error) {
@@ -88,7 +102,7 @@ const Profile = () => {
     if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
     return num?.toString() || '0';
   };
-
+  
   if (loading) {
     return (
       <div className="min-h-screen bg-white dark:bg-zinc-900 transition-colors duration-300">

@@ -4,7 +4,7 @@ import { PlayerContext } from '../context/PlayerContext';
 import { AuthContext } from '../context/AuthContext';
 import { ArrowLeft, Play, Music, Clock, User, Hash } from 'lucide-react';
 import TrackList from '../components/TrackList';
-import { BACKEND_URL } from '../utils/authFetch';
+import { getBackendURL } from '../utils/authFetch';
 
 const AlbumPage = () => {
   const { spotify_id } = useParams();
@@ -19,25 +19,31 @@ const AlbumPage = () => {
   useEffect(() => {
     if (!token) return;
 
+    const fetchAlbum = async () => {
+      const baseUrl = await getBackendURL();
 
-    fetch(`${BACKEND_URL}/api/albums/${encodeURIComponent(spotify_id)}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
-      .then(res => res.json())
-      .then(data => {
-        if (data.error) {
-          console.error(data.error);
-          setAlbumInfo(null);
-          setTracks([]);
-          return;
-        }
-        setAlbumInfo(data.album);
-        setTracks(data.tracks || []);
+      fetch(`${baseUrl}/api/albums/${encodeURIComponent(spotify_id)}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       })
-      .catch(console.error);
+        .then(res => res.json())
+        .then(data => {
+          if (data.error) {
+            console.error(data.error);
+            setAlbumInfo(null);
+            setTracks([]);
+            return;
+          }
+          setAlbumInfo(data.album);
+          setTracks(data.tracks || []);
+        })
+        .catch(console.error);
+    };
+
+    fetchAlbum();
   }, [spotify_id, token]);
+
 
   const handlePlay = (track) => {
     setQueue(tracks);

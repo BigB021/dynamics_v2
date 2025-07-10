@@ -1,25 +1,39 @@
-import { useEffect, useContext } from 'react';
+import { useEffect, useContext, useState } from 'react';
 import { Heart, Play } from 'lucide-react';
 import { PlayerContext } from '../context/PlayerContext';
 import { FavoritesContext } from '../context/FavoritesContext';
 import TrackList from '../components/TrackList';
-import { BACKEND_URL } from '../utils/authFetch';
+import { getBackendURL } from '../utils/authFetch';
 
 export default function Favorites() {
   const { favorites, toggleFavorite } = useContext(FavoritesContext);
   const { playTrack, setQueue } = useContext(PlayerContext);
-  
+  const [backendURL, setBackendURL] = useState(null);
+
+  // Fetch backend URL once on mount
+  useEffect(() => {
+    const fetchBackendURL = async () => {
+      const url = await getBackendURL();
+      setBackendURL(url);
+    };
+    fetchBackendURL();
+  }, []);
 
   useEffect(() => {
     console.log('[Favorites Page] Rendered with', favorites.length, 'favorite tracks');
   }, [favorites]);
 
   const handlePlay = (track) => {
-    if (!track.url && track.filename) {
-      track.url = `${BACKEND_URL}/media/${track.filename}`;
+    if (!backendURL) {
+      console.warn('Backend URL not loaded yet');
+      return;
     }
+
+    // Avoid mutating original track
+    const trackWithUrl = track.url || (track.filename ? { ...track, url: `${backendURL}/media/${track.filename}` } : track);
+
     setQueue(favorites);
-    playTrack(track, favorites);
+    playTrack(trackWithUrl, favorites);
   };
 
   const handleDelete = async (spotifyId) => {

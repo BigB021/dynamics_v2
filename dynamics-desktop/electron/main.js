@@ -1,6 +1,8 @@
 const path = require("path");
 const { app, BrowserWindow } = require("electron");
 const { spawn } = require("child_process");
+const { ipcMain } = require("electron");
+
 require("dotenv").config();
 require('dotenv').config({
   path: path.join(__dirname, process.env.ELECTRON_DEV ? '.env.development' : '.env.production'),
@@ -13,6 +15,7 @@ function createWindow() {
     width: 1280,
     height: 800,
     webPreferences: {
+      preload: path.join(__dirname, "preload.js"), 
       nodeIntegration: true,
       contextIsolation: false,
     },
@@ -73,6 +76,13 @@ function startBackend() {
     console.log(`⚠️ Backend process exited with code ${code}, signal ${signal}`);
   });
 }
+
+ipcMain.handle("get-backend-url", () => {
+  return process.env.ELECTRON_DEV
+    ? "http://localhost:3000"
+    : "http://localhost:3000"; 
+});
+
 
 app.whenReady().then(() => {
   startBackend();

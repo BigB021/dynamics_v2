@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Play, Music, Clock, Globe } from 'lucide-react';
-import { BACKEND_URL } from '../utils/authFetch';
+import { getBackendURL } from '../utils/authFetch';
 
 const GuestHomePage = () => {
   const navigate = useNavigate();
@@ -10,14 +10,17 @@ const GuestHomePage = () => {
   const [albums, setAlbums] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+  const [backendURL, setBackendURL] = useState(null);
 
   useEffect(() => {
     async function fetchGuestHomeData() {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(`${BACKEND_URL}/api/guest-home`);
+        const url = await getBackendURL();
+        setBackendURL(url);
+
+        const res = await fetch(`${url}/api/guest-home`);
         if (!res.ok) throw new Error('Failed to fetch guest homepage data');
         const data = await res.json();
 

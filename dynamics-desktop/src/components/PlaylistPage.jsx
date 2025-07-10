@@ -2,8 +2,7 @@ import React, { useEffect, useState, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, Trash2, Music, Calendar } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext';
-import { authFetch } from '../utils/authFetch';
-import { BACKEND_URL } from '../utils/authFetch';
+import { authFetch, getBackendURL } from '../utils/authFetch';
 
 const PlaylistPage = () => {
   const [playlists, setPlaylists] = useState([]);
@@ -11,36 +10,47 @@ const PlaylistPage = () => {
   const [cover, setCover] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const { user } = useContext(AuthContext);
+  const [backendURL, setBackendURL] = useState(null);
 
   useEffect(() => {
-    fetchPlaylists();
+    async function loadBackendAndPlaylists() {
+      try {
+        const url = await getBackendURL();
+        setBackendURL(url);
+        fetchPlaylists(url);
+      } catch (err) {
+        console.error('Failed to get backend URL:', err);
+      }
+    }
+    loadBackendAndPlaylists();
   }, []);
 
-  const fetchPlaylists = () => {
-    authFetch(`${BACKEND_URL}/api/playlists`)
-      .then(res => res.json())
-      .then(data => {
-        if (Array.isArray(data)) {
-          setPlaylists(data);
-        } else {
-          console.error('Expected array, got:', data);
-          setPlaylists([]);
-        }
-      })
-      .catch(err => {
-        console.error('Fetch failed:', err);
+  const fetchPlaylists = async (url) => {
+    try {
+      const res = await authFetch(`${url}/api/playlists`);
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setPlaylists(data);
+      } else {
+        console.error('Expected array, got:', data);
         setPlaylists([]);
-      });
+      }
+    } catch (err) {
+      console.error('Fetch failed:', err);
+      setPlaylists([]);
+    }
   };
 
-  const handleAddPlaylist = async e => {
+  const handleAddPlaylist = async (e) => {
     e.preventDefault();
+    if (!backendURL) return;
+
     const formData = new FormData();
     formData.append('name', name);
     if (cover) formData.append('cover', cover);
 
     try {
-      const res = await authFetch(`${BACKEND_URL}/api/playlists`, {
+      const res = await authFetch(`${backendURL}/api/playlists`, {
         method: 'POST',
         body: formData,
       });
@@ -50,23 +60,24 @@ const PlaylistPage = () => {
       setName('');
       setCover(null);
       setShowForm(false);
-      fetchPlaylists();
+      fetchPlaylists(backendURL);
     } catch (err) {
       console.error(err);
     }
   };
 
-  const handleDelete = async id => {
+  const handleDelete = async (id) => {
+    if (!backendURL) return;
     if (!window.confirm('Are you sure you want to delete this playlist?')) return;
 
     try {
-      const res = await authFetch(`${BACKEND_URL}/api/playlists/${id}`, {
+      const res = await authFetch(`${backendURL}/api/playlists/${id}`, {
         method: 'DELETE',
       });
 
       if (!res.ok) throw new Error('Failed to delete');
 
-      fetchPlaylists();
+      fetchPlaylists(backendURL);
     } catch (err) {
       console.error(err);
     }
@@ -163,7 +174,7 @@ const PlaylistPage = () => {
                 <div className="relative overflow-hidden rounded-2xl">
                   {pl.cover ? (
                     <img
-                      src={`${BACKEND_URL}/media/${pl.cover}`}
+                      src={`${backendURL}/media/${pl.cover}`}
                       alt={`${pl.name} cover`}
                       className="w-full aspect-square object-cover group-hover:scale-110 transition-transform duration-700"
                     />

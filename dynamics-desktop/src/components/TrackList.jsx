@@ -1,10 +1,9 @@
 import React, { useState, useRef, useEffect, useContext } from 'react';
 import { Play, Pause, MoreVertical, Heart, Plus } from 'lucide-react';
 import { PlayerContext } from '../context/PlayerContext';
-import { authFetch } from '../utils/authFetch';
+import { authFetch, getBackendURL } from '../utils/authFetch';
 import { AuthContext } from '../context/AuthContext';
 import { FavoritesContext } from '../context/FavoritesContext';
-import { BACKEND_URL } from '../utils/authFetch';
 
 const TrackListItem = ({ track, onDelete, onPlay, index }) => {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -17,14 +16,22 @@ const TrackListItem = ({ track, onDelete, onPlay, index }) => {
   const { isFavorite, toggleFavorite } = useContext(FavoritesContext);
   const isLiked = isFavorite(track.spotify_id);
 
+  const [backendURL, setBackendURL] = useState(null);
 
-
-  
+  useEffect(() => {
+    // Load backend URL once on mount
+    (async () => {
+      const url = await getBackendURL();
+      setBackendURL(url);
+    })();
+  }, []);
 
   const fetchPlaylists = async () => {
     if (!token) return alert("You must be logged in");
+    if (!backendURL) return alert("Backend URL not loaded");
+
     try {
-      const res = await authFetch(`${BACKEND_URL}/api/playlists`); // No headers here
+      const res = await authFetch(`${backendURL}/api/playlists`); // authFetch adds headers internally
       if (!res.ok) throw new Error('Failed to fetch playlists');
       const data = await res.json();
       setPlaylists(data);
@@ -36,11 +43,13 @@ const TrackListItem = ({ track, onDelete, onPlay, index }) => {
 
   const handleAddToPlaylist = async (playlistId) => {
     if (!token) return alert("You must be logged in");
+    if (!backendURL) return alert("Backend URL not loaded");
+
     try {
-      const res = await authFetch(`${BACKEND_URL}/api/playlists/${playlistId}/tracks`, {
+      const res = await authFetch(`${backendURL}/api/playlists/${playlistId}/tracks`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ spotifyId: track.spotify_id }),  
+        body: JSON.stringify({ spotifyId: track.spotify_id }),
       });
       if (!res.ok) throw new Error('Failed to add track to playlist');
       alert('Track added to playlist');
@@ -51,7 +60,6 @@ const TrackListItem = ({ track, onDelete, onPlay, index }) => {
       alert('Failed to add track to playlist');
     }
   };
-
 
   const clickLock = useRef(false);
 
@@ -80,10 +88,9 @@ const TrackListItem = ({ track, onDelete, onPlay, index }) => {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-
   const isCurrentTrack = currentTrack?.spotify_id === track.spotify_id;
   const showPlayIcon = isCurrentTrack && isPlaying;
-
+  
   return (
     <div
       onClick={handleTrackClick}

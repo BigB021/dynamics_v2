@@ -13,13 +13,17 @@ const SearchBar = () => {
     const delayDebounce = setTimeout(() => {
       if (query.trim()) {
         setLoading(true);
-        searchTracks(query)
-          .then((res) => setResults(res.data))
-          .catch((err) => {
+        (async () => {
+          try {
+            const res = await searchTracks(query);
+            setResults(res.data);
+          } catch (err) {
             console.error('Search error:', err);
             setResults([]);
-          })
-          .finally(() => setLoading(false));
+          } finally {
+            setLoading(false);
+          }
+        })();
       } else {
         setResults([]);
       }
@@ -59,8 +63,6 @@ const SearchBar = () => {
       {!loading && query && results.length === 0 && (
         <div className="mt-6 text-center text-zinc-500">No results found.</div>
       )}
-
-   
     </div>
   );
 };
