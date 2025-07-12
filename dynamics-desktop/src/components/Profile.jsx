@@ -132,7 +132,7 @@ const Profile = () => {
           <div className="relative inline-block mb-6">
             {user?.profile_picture ? (
               <img
-                src={`${BACKEND_URL}/media/${user.profile_picture}`}
+                src={`${backendURL}/media/${user.profile_picture}`}
                 alt="Profile"
                 className="w-32 h-32 rounded-full object-cover border-4 border-purple-500 shadow-lg hover:scale-105 transition-transform duration-300"
               />
