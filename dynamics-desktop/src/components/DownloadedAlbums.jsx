@@ -2,7 +2,7 @@ import { useEffect, useState, useContext } from 'react';
 import { Album } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext'; 
-import { BACKEND_URL } from '../utils/authFetch';
+import { getBackendURL } from '../utils/authFetch';
 
 const DownloadedAlbums = () => {
   const [albums, setAlbums] = useState([]);
@@ -10,42 +10,53 @@ const DownloadedAlbums = () => {
   const { token } = useContext(AuthContext); 
 
   useEffect(() => {
+    if (!token) return;
+
+    const fetchAlbums = async () => {
+      try {
+        const BACKEND_URL = await getBackendURL();
+        const res = await fetch(`${BACKEND_URL}/api/albums`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!res.ok) throw new Error('Failed to fetch albums');
+
+        const data = await res.json();
+        console.log('Downloaded albums:', data);
+        setAlbums(data);
+      } catch (err) {
+        console.error('Error fetching albums:', err);
+      }
+    };
+
     fetchAlbums();
   }, [token]);
 
-  const fetchAlbums = () => {
-    if (!token) return;
-
-    fetch(`${BACKEND_URL}/api/albums`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        console.log('Downloaded albums:', data);
-        setAlbums(data);
-      })
-      .catch(console.error);
-  };
-
-  const handleDelete = (albumId, albumName) => {
+  const handleDelete = async (albumId, albumName) => {
     if (!token) return;
     if (!window.confirm(`Are you sure you want to delete the album "${albumName}"?`)) return;
 
-    fetch(`${BACKEND_URL}/api/albums/${albumId}`, {
-      method: 'DELETE',
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
-      .then((res) => res.json())
-      .then(() => {
-        setAlbums((prev) => prev.filter((album) => album.id !== albumId));
-      })
-      .catch((err) => {
-        console.error('Error deleting album:', err);
+    try {
+      const BACKEND_URL = await getBackendURL();
+      const res = await fetch(`${BACKEND_URL}/api/albums/${albumId}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || 'Failed to delete album');
+      }
+
+      setAlbums((prev) => prev.filter((album) => album.id !== albumId));
+    } catch (err) {
+      console.error('Error deleting album:', err);
+      alert('Failed to delete album. Please try again.');
+    }
   };
 
   return (

@@ -1,23 +1,40 @@
 import axios from 'axios';
+import { getBackendURL } from '../utils/authFetch';
 
-const API = axios.create({
-  baseURL: 'http://localhost:3000/api',
-});
+let API = null;
 
-// Add request interceptor to include the Authorization header
-API.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('token'); // Or sessionStorage if you prefer
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
+// Create or return axios instance with dynamic baseURL
+const getAPI = async () => {
+  if (API) return API;
 
-// API calls
-export const searchTracks = (query) => API.get(`/search?q=${encodeURIComponent(query)}`);
-export const downloadTrack = (url) => API.post('/download', { url });
+  const baseURL = await getBackendURL();
 
-export default API;
+  API = axios.create({
+    baseURL: baseURL + '/api',
+  });
+
+  API.interceptors.request.use(
+    (config) => {
+      const token = localStorage.getItem('token');
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+      return config;
+    },
+    (error) => Promise.reject(error)
+  );
+
+  return API;
+};
+
+export const searchTracks = async (query) => {
+  const api = await getAPI();
+  return api.get(`/search?q=${encodeURIComponent(query)}`);
+};
+
+export const downloadTrack = async (url) => {
+  const api = await getAPI();
+  return api.post('/download', { url });
+};
+
+export default getAPI;

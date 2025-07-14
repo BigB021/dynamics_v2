@@ -1,17 +1,25 @@
-// utils/authFetch.js
 import { useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 
-// Validate token value
+// Validate token
 const isValidToken = (token) => {
   return token && token !== 'null' && token !== 'undefined';
 };
 
-// Hook version for React components
+// Get backend URL (dynamic for Electron or fallback to Vite env)
+export const getBackendURL = async () => {
+  if (window.electronAPI?.getBackendURL) {
+    return await window.electronAPI.getBackendURL();
+  } else {
+    return import.meta.env.VITE_BACKEND_URL;
+  }
+};
+
+// Hook for React components
 export const useAuthFetch = () => {
   const { token } = useContext(AuthContext);
 
-  return (url, options = {}) => {
+  return async (url, options = {}) => {
     const headers = {
       ...(options.headers || {}),
     };
@@ -20,16 +28,16 @@ export const useAuthFetch = () => {
       headers.Authorization = `Bearer ${token}`;
     }
 
-    return fetch(url, { ...options, headers });
+    const baseUrl = await getBackendURL();
+    const fetchUrl = url.startsWith('http') ? url : `${baseUrl}${url}`;
+
+    return fetch(fetchUrl, { ...options, headers });
   };
 };
 
-export const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
-
-export const authFetch = (url, options = {}) => {
+// General-purpose authFetch (outside components)
+export const authFetch = async (url, options = {}) => {
   let token = localStorage.getItem('token');
-
-
   if (!isValidToken(token)) {
     token = null;
   }
@@ -41,10 +49,10 @@ export const authFetch = (url, options = {}) => {
   if (token) {
     headers.Authorization = `Bearer ${token}`;
   }
-  
-  const fetchUrl = url.startsWith('http') ? url : BACKEND_URL + url;
 
-  console.log("fetch url: "+fetchUrl);
+  const baseUrl = await getBackendURL();
+  const fetchUrl = url.startsWith('http') ? url : `${baseUrl}${url}`;
 
+  console.log('fetch url:', fetchUrl);
   return fetch(fetchUrl, { ...options, headers });
 };

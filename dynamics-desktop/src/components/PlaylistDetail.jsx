@@ -4,39 +4,47 @@ import { PlayerContext } from '../context/PlayerContext';
 import { ArrowLeft, Play, Music, Clock, User, Hash } from 'lucide-react';
 import TrackList from '../components/TrackList';
 import { authFetch } from '../utils/authFetch';
-import { BACKEND_URL } from '../utils/authFetch';
+import { getBackendURL } from '../utils/authFetch';
 
 const PlaylistDetail = () => {
   const { id } = useParams();
   const [tracks, setTracks] = useState([]);
   const [playlistInfo, setPlaylistInfo] = useState(null);
+  const [backendURL, setBackendURL] = useState(null);
   const navigate = useNavigate();
 
   const { playTrack, setQueue, currentTrack } = useContext(PlayerContext);
 
   useEffect(() => {
-      authFetch(`${BACKEND_URL}/api/playlists/${id}`)
-        .then(res => res.json())
-        .then(data => {
-          const { playlist, tracks } = data;
-          const enriched = tracks
-            .filter(track => track.file_path)
-            .map(track => ({
-              ...track,
-              url: `${BACKEND_URL}/media/${track.file_path.split('/').pop()}`,
-              cover: track.cover ? `${BACKEND_URL}/media/${track.cover}` : null,
-            }));
-        
-          setTracks(enriched);
-          setPlaylistInfo({
-            name: playlist.name || 'Untitled Playlist',
-            cover: playlist.cover,
-            trackCount: enriched.length,
-          });
-        })
-        .catch(console.error);
-    }, [id]);
-    
+    async function fetchData() {
+      try {
+        const url = await getBackendURL();
+        setBackendURL(url);
+        const res = await authFetch(`${url}/api/playlists/${id}`);
+        const data = await res.json();
+        const { playlist, tracks } = data;
+        const enriched = tracks
+          .filter(track => track.file_path)
+          .map(track => ({
+            ...track,
+            url: `${url}/media/${track.file_path.split('/').pop()}`,
+            cover: track.cover ? `${url}/media/${track.cover}` : null,
+          }));
+
+        setTracks(enriched);
+        setPlaylistInfo({
+          name: playlist.name || 'Untitled Playlist',
+          cover: playlist.cover,
+          trackCount: enriched.length,
+        });
+
+        console.log('Fetched playlist:', playlist);
+      } catch (error) {
+        console.error(error);
+      }
+    }
+    fetchData();
+  }, [id]);
 
   const handlePlay = (track) => {
     setQueue(tracks);
@@ -66,7 +74,7 @@ const PlaylistDetail = () => {
             <div className="flex-shrink-0">
               {playlistInfo?.cover ? (
                 <img
-                  src={`${BACKEND_URL}/media/${playlistInfo.cover}`}
+                  src={`${backendURL}/media/${playlistInfo.cover}`}
                   alt="Playlist cover"
                   className="w-72 h-72 object-cover rounded-2xl shadow-2xl border-4 border-white/50 dark:border-gray-700"
                 />

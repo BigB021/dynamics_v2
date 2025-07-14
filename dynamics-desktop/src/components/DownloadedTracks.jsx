@@ -3,7 +3,7 @@ import { Music2, Download } from 'lucide-react';
 import TrackList from './TrackList';
 import { PlayerContext } from '../context/PlayerContext';
 import { AuthContext } from '../context/AuthContext'; 
-import { BACKEND_URL } from '../utils/authFetch';
+import { getBackendURL } from '../utils/authFetch';
 
 const DownloadedTracks = () => {
   const [tracks, setTracks] = useState([]);
@@ -11,20 +11,24 @@ const DownloadedTracks = () => {
   const { currentTrack, playTrack, setQueue } = useContext(PlayerContext);
   const { token } = useContext(AuthContext); 
 
-  const handleDelete = (spotifyId) => {
+  const handleDelete = async (spotifyId) => {
     if (!token) return;
 
-    fetch(`${BACKEND_URL}/api/downloaded/${spotifyId}`, {
-      method: 'DELETE',
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
-      .then(res => {
-        if (!res.ok) throw new Error('Failed to delete track');
-        setTracks(prev => prev.filter(track => track.spotify_id !== spotifyId));
-      })
-      .catch(console.error);
+    try {
+      const BACKEND_URL = await getBackendURL();
+      const res = await fetch(`${BACKEND_URL}/api/downloaded/${spotifyId}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) throw new Error('Failed to delete track');
+
+      setTracks(prev => prev.filter(track => track.spotify_id !== spotifyId));
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   const handlePlayTrack = (track) => {
@@ -35,14 +39,20 @@ const DownloadedTracks = () => {
   useEffect(() => {
     if (!token) return;
 
-    setLoading(true);
-    fetch(`${BACKEND_URL}/api/downloaded`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
-      .then(res => res.json())
-      .then(data => {
+    const fetchTracks = async () => {
+      setLoading(true);
+      try {
+        const BACKEND_URL = await getBackendURL();
+        const res = await fetch(`${BACKEND_URL}/api/downloaded`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!res.ok) throw new Error('Failed to fetch tracks');
+
+        const data = await res.json();
+
         const parsed = data.map(track => ({
           ...track,
           id: `${track.filename}-${Date.now()}`,
@@ -54,10 +64,16 @@ const DownloadedTracks = () => {
             ? parseDurationString(track.duration)
             : track.duration || 0,
         }));
+
         setTracks(parsed);
-      })
-      .catch(console.error)
-      .finally(() => setLoading(false));
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTracks();
   }, [token]);
 
   function parseDurationString(durationStr) {

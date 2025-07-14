@@ -64,6 +64,8 @@ router.get('/:spotify_id', async (req, res) => {
         url: mediaBaseUrl + encodeURIComponent(path.basename(track.file_path)),
         cover: track.cover ? mediaBaseUrl + encodeURIComponent(track.cover) : null,
         duration: track.duration || 0,
+        track_number: track.track_number ?? null,
+        disc_number: track.disc_number ?? null,
       };
     }));
 

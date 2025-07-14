@@ -8,19 +8,20 @@ import { PlayerContext } from '../context/PlayerContext';
 import SearchBar from './SearchBar';
 import TrackRow from './TrackRow';
 import { AuthContext } from '../context/AuthContext';
-import { BACKEND_URL } from '../utils/authFetch';
-
+import { getBackendURL } from '../utils/authFetch';
 
 const HomePage = () => {
   const [data, setData] = useState(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [backendURL, setBackendURL] = useState(null);
 
   const navigate = useNavigate();
   const { token } = useContext(AuthContext);  
 
   const fetchData = async () => {
     try {
-      const res = await fetch(`${BACKEND_URL}/api/home`, {
+      if (!backendURL) return; // wait until backendURL is set
+      const res = await fetch(`${backendURL}/api/home`, {
         headers: {
           Authorization: `Bearer ${token}`,  
         },
@@ -34,17 +35,25 @@ const HomePage = () => {
   };
 
   useEffect(() => {
-    if (token) {
-        fetchData();
+    async function init() {
+      const url = await getBackendURL();
+      setBackendURL(url);
     }
-  }, [token]);
+    init();
+  }, []);
+
+  useEffect(() => {
+    if (token && backendURL) {
+      fetchData();
+    }
+  }, [token, backendURL]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
     await fetchData();
     setTimeout(() => setIsRefreshing(false), 1000);
   };
-
+  
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-100 via-white to-gray-100 dark:from-slate-900 dark:via-zinc-900 dark:to-slate-900 px-4 sm:px-6 lg:px-8 py-6 sm:py-8 relative overflow-hidden transition-colors duration-300">
       {/* Animated Background Elements */}
@@ -300,7 +309,7 @@ const HomePage = () => {
         )}
       </div>
 
-      <style jsx>{`
+      <style>{`
         @keyframes fade-in {
           from { opacity: 0; }
           to { opacity: 1; }

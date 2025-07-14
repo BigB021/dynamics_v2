@@ -25,7 +25,7 @@ export const AuthProvider = ({ children }) => {
   // Fetch user info if token exists
   useEffect(() => {
     if (token) {
-      authFetch('http://localhost:3000/api/auth/me')
+      authFetch('/api/auth/me')
         .then(res => {
           if (!res.ok) throw new Error('Failed to fetch user');
           return res.json();

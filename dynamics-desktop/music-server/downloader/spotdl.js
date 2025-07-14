@@ -14,8 +14,20 @@ dotenv.config();
 
 
 
-//const spotdlPath = process.env.SPOTDL_PATH;
-const spotdlPath = path.join(os.homedir(), 'dynamics', 'venv', 'bin', 'spotdl');;
+const isWindows = os.platform() === 'win32';
+
+// __dirname in spotdl.js resolves to music-server/downloader, so go up accordingly
+// Adjust this path relative to your project structure
+
+const baseDir = path.resolve(__dirname, '../../venv');
+
+const spotdlPath = isWindows
+  ? path.join(baseDir, 'Scripts', 'spotdl.exe')
+  : path.join(baseDir, 'bin', 'spotdl');
+
+console.log('Using spotdl binary:', spotdlPath);
+
+
 const downloadDir = process.env.DOWNLOAD_DIR || path.join(os.homedir(), 'dynamics', 'media');
 if (!fs.existsSync(downloadDir)) fs.mkdirSync(downloadDir, { recursive: true });
 const downloads = {}; // taskId => { state, message }
@@ -72,6 +84,8 @@ async function getSpotifyTracks(entity) {
       title: track.name,
       artist: track.artists[0]?.name || 'Unknown',
       album: track.album.name,
+      track_number: track.track_number,
+      disc_number: track.disc_number
     }];
   }
 
@@ -86,6 +100,8 @@ async function getSpotifyTracks(entity) {
         title: t.name,
         artist: t.artists[0]?.name || 'Unknown',
         album: '', 
+        track_number: t.track_number,
+        disc_number: t.disc_number
       })));
       if (data.next) offset += limit;
       else break;
@@ -109,6 +125,8 @@ async function getSpotifyTracks(entity) {
           title: t.name,
           artist: t.artists[0]?.name || 'Unknown',
           album: t.album?.name || '',
+          track_number: t.track_number,
+          disc_number: t.disc_number
         };
       }));
       if (data.next) offset += limit;
@@ -130,8 +148,11 @@ async function downloadWithSpotDL(url, taskId, userId) {
 
     const spotifyTracks = await getSpotifyTracks(entity);
 
-    const outputPath = path.join(downloadDir, '{artist} - {title}');
+    const outputPath = isWindows
+      ? path.join(downloadDir, '{artist} - {title}').replace(/\\/g, '\\\\') // escape backslashes for Windows
+      : path.join(downloadDir, '{artist} - {title}');
     const args = [
+      '--overwrite', 'force',
       '--output', outputPath, 
       '--bitrate', '192k', 
       '--format', 'mp3', 
@@ -156,6 +177,8 @@ async function downloadWithSpotDL(url, taskId, userId) {
           ...process.env,
           SPOTIPY_CLIENT_ID: process.env.SPOTIFY_CLIENT_ID,
           SPOTIPY_CLIENT_SECRET: process.env.SPOTIFY_CLIENT_SECRET,
+          PYTHONIOENCODING: 'utf-8',
+
         },
       });
     
@@ -199,9 +222,14 @@ async function downloadWithSpotDL(url, taskId, userId) {
     const mp3s = glob.sync(path.join(downloadDir, '*.mp3'));
     mp3s.sort((a, b) => fs.statSync(b).mtimeMs - fs.statSync(a).mtimeMs);
     const recent = mp3s.filter(f => fs.statSync(f).mtimeMs > (Date.now() - 1000 * 60 * 5));
+    let candidates = recent;
     if (recent.length === 0) {
-      downloads[taskId] = { state: 'error', message: 'No MP3s found' };
-      throw new Error('No MP3s downloaded');
+      console.warn(`[${taskId}] No recent MP3s found. Falling back to all available MP3s.`);
+      candidates = mp3s;
+      if (candidates.length === 0) {
+        downloads[taskId] = { state: 'error', message: 'No MP3s found at all' };
+        throw new Error('No MP3s downloaded at all');
+      }
     }
 
     const firstMeta = await mm.parseFile(recent[0]);
@@ -209,24 +237,20 @@ async function downloadWithSpotDL(url, taskId, userId) {
     const artistName = sanitizeFileName(firstMeta.common.artist || 'Unknown');
     let releaseDate = firstMeta.common.date || null;
 
-    const coverPath = await extractCover(recent[0], downloadDir);
-    const coverFileName = coverPath ? path.basename(coverPath) : null;
-
-    let albumSpotifyId = null;
-    let albumDbId = null;
-      
+    let albumCoverFileName = null;
     if (entity.type === 'album') {
+      const firstCoverPath = await extractCover(recent[0], downloadDir);
+      albumCoverFileName = firstCoverPath ? path.basename(firstCoverPath) : null;
+
       const albumInfo = await spotifyFetch(`albums/${entity.id}`);
       albumSpotifyId = albumInfo.id;
       albumName = sanitizeFileName(albumInfo.name);
       releaseDate = albumInfo.release_date || null;
-    
-      albumDbId = await addAlbum(albumName, artistName, coverFileName, releaseDate, albumSpotifyId);
+
+      albumDbId = await addAlbum(albumName, artistName, albumCoverFileName, releaseDate, albumSpotifyId);
       console.log(`[${taskId}] Album added with DB id: ${albumDbId}`);
-      console.log(`[${taskId}] Saving album with Spotify ID: ${albumSpotifyId}`);
-    } else {
-      console.log(`[${taskId}] Not an album, skipping album DB creation`);
-    }
+    } 
+
     
 
     function matchTrackMeta(artist, title) {
@@ -238,7 +262,7 @@ async function downloadWithSpotDL(url, taskId, userId) {
       );
     }
 
-    for (const file of recent) {
+    for (const file of candidates) {
       try {
         const meta = await mm.parseFile(file);
         const artist = sanitizeFileName(meta.common.artist || 'Unknown');
@@ -248,7 +272,23 @@ async function downloadWithSpotDL(url, taskId, userId) {
         const release = meta.common.date || null;
 
         const matchedTrack = matchTrackMeta(artist, title);
+
+        if (matchedTrack) {
+          console.log(`[${taskId}] Matched track ${title} ➝ track_number: ${matchedTrack.track_number}, disc: ${matchedTrack.disc_number}`);
+        } else {
+          console.warn(`[${taskId}] No match for ${artist} - ${title}`);
+        }
+
         const spotifyTrackId = matchedTrack ? matchedTrack.id : uuidv4();
+
+        // Extract cover per track
+        let trackCoverFileName = null;
+        if (entity.type === 'album') {
+          trackCoverFileName = albumCoverFileName; // reuse album cover
+        } else {
+          const trackCoverPath = await extractCover(file, downloadDir);
+          trackCoverFileName = trackCoverPath ? path.basename(trackCoverPath) : null;
+        }
 
         if (!matchedTrack) {
           console.warn(`[${taskId}] Warning: no Spotify track ID found for ${artist} - ${title}`);
@@ -264,12 +304,15 @@ async function downloadWithSpotDL(url, taskId, userId) {
           album,
           duration,
           release,
-          coverFileName
+          trackCoverFileName,
+          matchedTrack ? matchedTrack.track_number : null,
+          matchedTrack ? matchedTrack.disc_number : null
         );
       } catch (err) {
         console.error(`[${taskId}] Error processing file ${file}:`, err);
       }
     }
+
 
     downloads[taskId] = { state: 'finished', message: 'Album/tracks downloaded' };
     return 'Album/tracks downloaded';

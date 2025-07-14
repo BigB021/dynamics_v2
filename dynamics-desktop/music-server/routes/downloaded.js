@@ -24,9 +24,9 @@ router.get('/', (req, res) => {
       artist: track.artist ,
       title: track.title ,
       cover: track.cover ? mediaBaseUrl + encodeURIComponent(track.cover) : '/default_cover.jpeg',
-      duration: track.duration 
-      
-
+      duration: track.duration, 
+      track_number: track.track_number,
+      disc_number: track.disc_number,
     }));
 
     res.json(tracks);

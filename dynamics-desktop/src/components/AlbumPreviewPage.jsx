@@ -5,7 +5,7 @@ import { Download, Loader2, Play } from 'lucide-react';
 import TrackRow from '../components/TrackRow';
 import { PlayerContext } from '../context/PlayerContext';
 import { AuthContext } from '../context/AuthContext';
-import { BACKEND_URL } from '../utils/authFetch';
+import { getBackendURL } from '../utils/authFetch';
 
 const AlbumPreviewPage = () => {
   const { spotify_id } = useParams();
@@ -23,6 +23,7 @@ const AlbumPreviewPage = () => {
     const fetchAlbum = async () => {
       setError(null);
       try {
+        const BACKEND_URL = await getBackendURL();
         const res = await axios.get(
           `${BACKEND_URL}/api/preview/album/${spotify_id}`,
           {
@@ -56,6 +57,7 @@ const AlbumPreviewPage = () => {
     setError(null);
 
     try {
+      const BACKEND_URL = await getBackendURL();
       const res = await axios.post(
         `${BACKEND_URL}/api/download`,
         {

@@ -9,7 +9,7 @@ const { db, getAllPlaylists, createPlaylist, addTrackToPlaylist } = require('../
 
 const router = express.Router();
 
-const uploadDir = path.join(os.homedir(), '.dynamics', 'media', 'playlist_covers')
+const uploadDir = path.join(os.homedir(), 'dynamics', 'media', 'playlist_covers')
 
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
