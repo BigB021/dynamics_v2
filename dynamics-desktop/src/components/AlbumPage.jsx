@@ -123,7 +123,7 @@ const AlbumPage = () => {
 
       <div className="px-6 py-8 md:px-12 mb-20">
         {tracks.length > 0 ? (
-          <TrackList tracks={tracks} onPlay={handlePlay} title="Tracks" />
+          <TrackList tracks={tracks} onPlay={handlePlay} title="Tracks" useTrackNumber={true}  />
         ) : (
           <div className="text-center py-20 bg-white/40 backdrop-blur-sm rounded-3xl border border-white/20 dark:bg-gray-900/60 dark:border-gray-700">
             <div className="w-20 h-20 bg-gradient-to-br from-slate-200 to-slate-300 dark:from-gray-700 dark:to-gray-800 rounded-full flex items-center justify-center mx-auto mb-6">

@@ -295,7 +295,7 @@ const HomePage = () => {
             )}
 
             {/* Footer */}
-            <footer className="mt-12 sm:mt-16 pt-6 sm:pt-8 border-t border-white/10 animate-fade-in-up delay-700">
+            <footer className="mt-12 sm:mt-16 pt-6 sm:pt-8 border-t border-white/10 animate-fade-in-up delay-700 ">
               <div className="text-center text-gray-400 space-y-3">
                 <p className="text-sm sm:text-base">Last updated: {data.metadata?.timestamp ? new Date(data.metadata.timestamp).toLocaleString() : 'Now'}</p>
                 <div className="flex items-center justify-center gap-2">
@@ -303,6 +303,7 @@ const HomePage = () => {
                   <span className="text-sm">Shuffle through endless music discoveries</span>
                 </div>
                   <span className="text-md pt-10 ">Made By Youssef aka.  <a className='text-pink-400 hover:text-pink-700' href="https://github.com/BigB021">@Bigb_021</a> </span>
+                <div className="text-xs text-gray-500 dark:text-gray-400 h-10"></div>
               </div>
             </footer>
           </div>

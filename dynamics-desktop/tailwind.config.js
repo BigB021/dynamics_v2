@@ -37,6 +37,7 @@ module.exports = {
     },
   },
   plugins: [
+    require('tailwind-scrollbar-hide'),
     plugin(function ({ addBase }) {
       addBase({
         // Dark theme

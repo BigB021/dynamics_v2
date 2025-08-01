@@ -79,6 +79,8 @@ const GlobalMusicPlayer = () => {
     audio.src = currentTrack.url;
     
     const handleCanPlay = () => {
+      audio.volume = volume;
+      
       setIsLoading(false);
       setLoadedTrackId(currentTrackId);
       

@@ -95,15 +95,15 @@ const VerticalNavbar = ({ onToggle }) => {
   return (
     <div
       className={`fixed top-0 left-0 ${
-        expanded ? 'w-56' : 'w-20'
+        expanded ? 'w-56' : 'w-22'
       } bg-slate-900/20 dark:bg-slate-900/40 backdrop-blur-xl border-r border-white/10 dark:border-white/5 z-40 px-4 py-6 flex flex-col transition-all duration-300 shadow-2xl`}
       style={{ height: '100vh' }}
     >
 
       {/* Content Container with proper flex layout */}
-      <div className="relative z-10 flex flex-col h-full pb-40 ">
+      <div className="relative z-10 flex flex-col h-full pb-40 scrollbar-hide overflow-y-scroll ">
         {/* Top Section */}
-        <div className="flex-none space-y-6">
+        <div className="flex-none space-y-6 ">
           {/* Logo */}
           <div className="flex items-center gap-3 pb-4 border-b border-white/10 dark:border-white/5">
             <div className="relative">
@@ -122,7 +122,7 @@ const VerticalNavbar = ({ onToggle }) => {
           </div>
 
           {/* Navigation */}
-          <nav className="space-y-2">
+          <nav className="space-y-2 ">
             {navItem('/', 'Home', <Home size={22} />)}
             {navItem('/downloads', 'Downloads', <Download size={22} />)}
             {navItem('/favorites', 'Favorites', <Heart size={22} />)}
@@ -191,7 +191,7 @@ const VerticalNavbar = ({ onToggle }) => {
       </div>
 
       {/* Additional glass effect overlay */}
-      <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none rounded-r-2xl"></div>
+      <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none"></div>
     </div>
   );
 };

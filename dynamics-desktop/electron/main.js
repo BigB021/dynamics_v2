@@ -8,16 +8,21 @@ require('dotenv').config({
   path: path.join(__dirname, process.env.ELECTRON_DEV ? '.env.development' : '.env.production'),
 });
 
+const isDev = !!process.env.ELECTRON_DEV;
+const preloadPath = isDev
+  ? path.join(__dirname, "preload.js")
+  : path.join(__dirname, "electron", "preload.js"); 
+
 let serverProcess = null;
 
 function createWindow() {
   const win = new BrowserWindow({
-    width: 1280,
-    height: 800,
+    width: 800,
+    height: 600,
     webPreferences: {
-      preload: path.join(__dirname, "preload.js"), 
-      nodeIntegration: true,
-      contextIsolation: false,
+      preload: preloadPath, 
+      contextIsolation: true,
+      nodeIntegration: false, 
     },
   });
 
