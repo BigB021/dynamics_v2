@@ -78,11 +78,11 @@ const HomePage = () => {
             <p className="text-gray-300 text-lg font-medium animate-pulse">Loading your personalized music feed...</p>
           </div>
         ) : (
-          <div className="space-y-8 sm:space-y-12">
+          <div className="space-y-8 sm:space-y-12 ">
             {/* HEADER */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-0 animate-slide-up">
-              <div className="space-y-2">
-                <h1 className="text-3xl sm:text-4xl lg:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 animate-gradient-x">
+            <div className=" flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-0 animate-slide-up">
+              <div className="space-y-3">
+                <h1 className="text-3xl sm:text-4xl lg:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 animate-gradient-x ">
                   {data.greeting}
                 </h1>
                 <p className="text-gray-400 text-sm sm:text-base">
@@ -295,7 +295,7 @@ const HomePage = () => {
             )}
 
             {/* Footer */}
-            <footer className="mt-12 sm:mt-16 pt-6 sm:pt-8 border-t border-white/10 animate-fade-in-up delay-700">
+            <footer className="mt-sm:mt-16 pt-6 sm:pt-8 border-t border-white/10 animate-fade-in-up delay-700">
               <div className="text-center text-gray-400 space-y-3">
                 <p className="text-sm sm:text-base">Last updated: {data.metadata?.timestamp ? new Date(data.metadata.timestamp).toLocaleString() : 'Now'}</p>
                 <div className="flex items-center justify-center gap-2">
@@ -304,6 +304,7 @@ const HomePage = () => {
                 </div>
                   <span className="text-md pt-10 ">Made By Youssef aka.  <a className='text-pink-400 hover:text-pink-700' href="https://github.com/BigB021">@Bigb_021</a> </span>
               </div>
+              <div className="mt-12"></div>
             </footer>
           </div>
         )}

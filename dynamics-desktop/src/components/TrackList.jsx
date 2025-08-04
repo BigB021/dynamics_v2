@@ -5,7 +5,7 @@ import { authFetch, getBackendURL } from '../utils/authFetch';
 import { AuthContext } from '../context/AuthContext';
 import { FavoritesContext } from '../context/FavoritesContext';
 
-const TrackListItem = ({ track, onDelete, onPlay, index }) => {
+const TrackListItem = ({ track, onDelete, onPlay, index, useTrackNumber = false }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [playlists, setPlaylists] = useState([]);
   const [playlistMenuOpen, setPlaylistMenuOpen] = useState(false);
@@ -103,7 +103,7 @@ const TrackListItem = ({ track, onDelete, onPlay, index }) => {
         <span className={`text-sm font-medium group-hover:opacity-0 transition-opacity ${
           isCurrentTrack ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-500 dark:text-gray-400'
         }`}>
-          {track.track_number ?? index + 1}
+          {useTrackNumber && track.track_number ? track.track_number : index + 1}
         </span>
         <button
           onClick={(e) => {
@@ -268,6 +268,7 @@ const TrackList = ({ tracks, onDelete, onPlay, title = "Songs" }) => {
             index={index}
             onDelete={onDelete}
             onPlay={() => onPlay && onPlay(track)}
+            //useTrackNumber={true}
           />
         ))}
       </div>

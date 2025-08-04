@@ -16,7 +16,8 @@
     "react-dom": "^19.1.0",
     "react-h5-audio-player": "^3.10.0",
     "react-router": "^7.6.3",
-    "react-router-dom": "^7.6.3"
+    "react-router-dom": "^7.6.3",
+    "tailwind-scrollbar-hide": "^4.0.0"
   },
   "main": "electron/main.js",
   "homepage": "./",
@@ -61,9 +62,6 @@
     "tailwindcss": "^3.4.17",
     "vite": "^7.0.0"
   },
-
-
-
   "build": {
     "appId": "com.youssef.dynamics",
     "productName": "Dynamics",
@@ -101,7 +99,9 @@
     },
     "linux": {
       "icon": "public/logo.png",
-      "target": ["AppImage"]
+      "target": [
+        "AppImage"
+      ]
     },
     "win": {
       "icon": "public/favicon.ico",

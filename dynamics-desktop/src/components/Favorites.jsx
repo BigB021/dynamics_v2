@@ -30,8 +30,16 @@ export default function Favorites() {
     }
 
     // Avoid mutating original track
-    const trackWithUrl = track.url || (track.filename ? { ...track, url: `${backendURL}/media/${track.filename}` } : track);
+    const trackWithUrl = {
+      ...track,
+      url: track.url || (track.filename ? `${backendURL}/media/${track.filename}` : null),
+    };
 
+    if (!trackWithUrl.url) {
+      console.error("Track has no URL or filename:", track);
+      return;
+    } 
+    console.log('Playing track:', trackWithUrl.title, 'by', trackWithUrl.artist);
     setQueue(favorites);
     playTrack(trackWithUrl, favorites);
   };
